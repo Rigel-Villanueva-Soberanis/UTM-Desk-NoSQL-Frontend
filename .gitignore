@@ -1,0 +1,72 @@
+# ── Documentación local (guías) ──────────────────────
+*.md
+
+# ── Colección de Postman (solo este archivo) ─────────
+UTM-Desk-NoSQL.postman_collection.json
+
+# ── Dependencias ─────────────────────────────────────
+node_modules/
+
+# ── Build de Vite ────────────────────────────────────
+dist/
+dist-ssr/
+*.local
+
+# ── Variables de entorno ─────────────────────────────
+# Solo lleva la URL pública del backend (no hay secretos): .env.example, .env.development y
+# .env.production SÍ se suben. Cualquier archivo local o con secretos, NO.
+.env
+.env.local
+.env.*.local
+.env.secret*
+
+# ── Certificados y llaves (nunca subir) ──────────────
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+.mkcert/
+
+# ── Logs ─────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Editores / sistema ───────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# ── Paquetes y copias de trabajo ─────────────────────
+*.tar
+*.zip
+*.7z
+*.rar
+*.bak
+*.orig
+
+# ── Herramientas de IA / notas locales ───────────────────
+.claude/
+CLAUDE.md
+
+# ── Pruebas / caché ──────────────────────────────────
+playwright-report/
+test-results/
+.vite/
+.oxlintcache
+coverage/
+*.tsbuildinfo
+.eslintcache
+
+# ── Imágenes de referencia (no subir) ────────────────
+No subir imagenes/
