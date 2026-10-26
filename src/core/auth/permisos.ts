@@ -22,7 +22,7 @@ export const PERMISOS = {
   'incidencias.buscar': ['root', 'soporte', 'directivos'],
   'analitica.tiempos': ['root', 'directivos'],
   'analitica.eficiencia': ['root', 'administrativos'],
-  'usuarios.admin': ['soporte'],
+  'usuarios.admin': ['root', 'soporte'],
   // Leer catálogos lo puede hacer cualquier rol (el backend lo permite y las listas de los formularios lo necesitan),
   // pero el módulo «Catálogos» (menú y pantallas) es solo para quien puede editarlos: ver «catalogos.editar».
   'catalogos.ver': TODOS,
