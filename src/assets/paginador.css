@@ -1,0 +1,196 @@
+/* Paginado único de las tablas (ver shared/config/paginador.ts).
+   Izquierda: resumen + «Filas»; derecha: « Anterior 1 2 3 … 5 Siguiente ». */
+/* PrimeVue mete los controles dentro de `.p-paginator-content`, que se encoge a su contenido y se centra:
+   por eso se le da todo el ancho (con !important, porque el tema se inyecta después de este archivo). */
+.p-paginator {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+  align-self: stretch;
+  padding: 14px 24px;
+  border: 0;
+  border-top: 1px solid #f1f5f9;
+  background: transparent;
+}
+.p-paginator .p-paginator-content {
+  display: flex !important;
+  flex: 1 1 auto;
+  width: 100% !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: 10px 14px;
+}
+.p-paginator .p-paginator-current {
+  order: 0;
+  padding: 0 14px 0 0;
+  border-right: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+/* «Filas: [10 ▾]» */
+.p-paginator .p-paginator-rpp-dropdown {
+  order: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+.p-paginator .p-paginator-rpp-dropdown::before {
+  content: 'Filas:';
+  padding-left: 14px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.p-paginator .p-paginator-rpp-dropdown:hover {
+  border-color: #cbd5e1;
+}
+.p-paginator .p-paginator-rpp-dropdown.p-focus,
+.p-paginator .p-paginator-rpp-dropdown:focus-within {
+  outline: 2px solid #bfdbfe;
+  outline-offset: 1px;
+}
+.p-paginator .p-paginator-rpp-dropdown .p-select-label {
+  font-size: inherit;
+  font-weight: 600;
+  padding: 0 2px 0 8px;
+}
+.p-paginator .p-paginator-rpp-dropdown .p-select-dropdown {
+  width: 26px;
+  color: #64748b;
+}
+
+/* Navegación a la derecha */
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-pages,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  order: 2;
+}
+.p-paginator .p-paginator-pages {
+  display: flex;
+  gap: 4px;
+}
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last,
+.p-paginator .p-paginator-page {
+  min-width: 32px;
+  height: 32px;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+/* Anterior / Siguiente con texto */
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next {
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+}
+.p-paginator .p-paginator-prev::after {
+  content: 'Anterior';
+}
+.p-paginator .p-paginator-next {
+  flex-direction: row-reverse;
+}
+.p-paginator .p-paginator-next::after {
+  content: 'Siguiente';
+}
+.p-paginator .p-paginator-first:not(.p-disabled):hover,
+.p-paginator .p-paginator-prev:not(.p-disabled):hover,
+.p-paginator .p-paginator-next:not(.p-disabled):hover,
+.p-paginator .p-paginator-last:not(.p-disabled):hover,
+.p-paginator .p-paginator-page:not(.p-paginator-page-selected):hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.p-paginator .p-paginator-page.p-paginator-page-selected {
+  background: #2563eb;
+  color: #fff;
+}
+.p-paginator .p-disabled {
+  opacity: 0.4;
+}
+.p-paginator button:focus-visible {
+  outline: 2px solid #bfdbfe;
+  outline-offset: 1px;
+}
+/* «Anterior · páginas · Siguiente» al extremo derecho (la regla va con más especificidad que el `margin: 0` de los botones) */
+.p-paginator .p-paginator-content .p-paginator-prev {
+  margin-left: auto;
+}
+@media (min-width: 761px) {
+  /* En pantallas anchas todo va en una sola línea: resumen y «Filas» a la izquierda, flechas y páginas a la derecha. */
+  .p-paginator .p-paginator-content {
+    flex-wrap: nowrap;
+  }
+  .p-paginator .p-paginator-current {
+    white-space: nowrap;
+  }
+}
+@media (max-width: 760px) {
+  .p-paginator .p-paginator-content {
+    justify-content: center !important;
+  }
+  .p-paginator .p-paginator-current {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    text-align: center;
+  }
+  .p-paginator .p-paginator-content .p-paginator-prev {
+    margin-left: 0;
+  }
+  .p-paginator .p-paginator-prev::after,
+  .p-paginator .p-paginator-next::after {
+    content: none;
+  }
+}
+
+/* Paginado de ARRIBA: sólo las flechas (sin texto), pegadas a la derecha. */
+.p-paginator.p-datatable-paginator-top {
+  padding: 10px 24px 6px;
+  border: 0;
+}
+.p-datatable-paginator-top .p-paginator-content {
+  justify-content: flex-end !important;
+  gap: 6px;
+}
+.p-datatable-paginator-top .p-paginator-current,
+.p-datatable-paginator-top .p-paginator-rpp-dropdown,
+.p-datatable-paginator-top .p-paginator-first,
+.p-datatable-paginator-top .p-paginator-last,
+.p-datatable-paginator-top .p-paginator-pages {
+  display: none !important;
+}
+.p-datatable-paginator-top .p-paginator-prev,
+.p-datatable-paginator-top .p-paginator-next {
+  width: 32px;
+  padding: 0;
+  margin: 0;
+}
+.p-datatable-paginator-top .p-paginator-prev::after,
+.p-datatable-paginator-top .p-paginator-next::after {
+  content: none;
+}

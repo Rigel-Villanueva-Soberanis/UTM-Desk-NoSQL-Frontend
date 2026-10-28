@@ -33,8 +33,9 @@ const botones = computed<Boton[]>(() => [
     regla: (i) => reglas.asignar(i),
   },
   { accion: 'estado', etiqueta: 'Cambiar estado', icono: 'pi pi-sync', permiso: 'incidencias.cambiarEstado', regla: reglas.cambiarEstado },
+  { accion: 'cerrar', etiqueta: 'Cerrar incidencia', icono: 'pi pi-lock', permiso: 'incidencias.cerrar', regla: (i) => reglas.cerrar(i) },
   { accion: 'nota', etiqueta: 'Agregar nota', icono: 'pi pi-comment', permiso: 'incidencias.seguimiento', regla: reglas.seguimiento },
-  { accion: 'horas', etiqueta: 'Registrar horas', icono: 'pi pi-clock', permiso: 'incidencias.horas', regla: reglas.horas },
+  { accion: 'horas', etiqueta: 'Registrar tiempo', icono: 'pi pi-clock', permiso: 'incidencias.horas', regla: reglas.horas },
   { accion: 'evidencia', etiqueta: 'Agregar evidencia', icono: 'pi pi-paperclip', permiso: 'incidencias.evidencias', regla: reglas.evidencias },
   { accion: 'etiquetas', etiqueta: 'Etiquetas', icono: 'pi pi-tags', permiso: 'incidencias.tags', regla: reglas.tags },
   { accion: 'externo', etiqueta: 'Proveedor externo', icono: 'pi pi-building', permiso: 'incidencias.externo', regla: (i) => reglas.externo(i) },
@@ -99,7 +100,7 @@ const puedeResolver = computed(() => {
         :key="b.accion"
         :label="b.etiqueta"
         :icon="b.icono"
-        :severity="b.severity ?? 'secondary'"
+        :severity="b.accion === 'cerrar' ? 'success' : (b.severity ?? 'secondary')"
         :outlined="b.severity === 'danger'"
         size="small"
         :data-accion="b.accion"
@@ -121,21 +122,64 @@ const puedeResolver = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--surface-low);
-  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 .titulo-rapidas {
   margin-right: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--on-surface-variant);
+  color: #94a3b8;
 }
 .acciones {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+}
+/* Botones blancos con borde y el icono de color según la acción; «Eliminar» en rosa. */
+.acciones :deep(.p-button) {
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.acciones :deep(.p-button:hover) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+.acciones :deep(.p-button:active) {
+  transform: scale(0.98);
+}
+.acciones :deep(.p-button-icon) {
+  font-size: 0.85rem;
+}
+.acciones :deep([data-accion='asignar'] .p-button-icon) { color: #2563eb; }
+.acciones :deep([data-accion='estado'] .p-button-icon) { color: #059669; }
+.acciones :deep([data-accion='nota'] .p-button-icon) { color: #4f46e5; }
+.acciones :deep([data-accion='horas'] .p-button-icon) { color: #d97706; }
+.acciones :deep([data-accion='evidencia'] .p-button-icon) { color: #475569; }
+.acciones :deep([data-accion='etiquetas'] .p-button-icon) { color: #9333ea; }
+.acciones :deep([data-accion='externo'] .p-button-icon) { color: #0891b2; }
+.acciones :deep([data-accion='editar'] .p-button-icon) { color: #475569; }
+.acciones :deep([data-accion='eliminar']) {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+.acciones :deep([data-accion='eliminar']:hover) {
+  background: #ffe4e6;
+  border-color: #fda4af;
+}
+.acciones :deep([data-accion='eliminar'] .p-button-icon) {
+  color: #e11d48;
 }
 </style>

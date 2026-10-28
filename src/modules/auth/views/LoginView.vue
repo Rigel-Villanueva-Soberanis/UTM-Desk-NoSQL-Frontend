@@ -24,7 +24,7 @@ const puedeEnviar = computed(() => !!form.usuario.trim() && !!form.password && !
 /** Solo se acepta un redirect interno (evita redirigir a otro sitio). */
 function destino(): string {
   const r = route.query.redirect
-  if (typeof r === 'string' && r.startsWith('/') && !r.startsWith('//')) return r
+  if (typeof r === 'string' && r !== '/' && r.startsWith('/') && !r.startsWith('//')) return r
   return rutaInicio(router, sesion.rol)
 }
 

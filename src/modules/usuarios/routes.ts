@@ -7,20 +7,8 @@ const rutas: RouteRecordRaw[] = [
     component: () => import('./views/UsuariosView.vue'),
     meta: { permiso: 'usuarios.admin', titulo: 'Usuarios' },
   },
-  {
-    // Antes de '/usuarios/:id': la ruta fija tiene prioridad sobre el parámetro.
-    path: '/usuarios/nuevo',
-    name: 'usuario-nuevo',
-    component: () => import('./views/UsuarioFormView.vue'),
-    meta: { permiso: 'usuarios.admin', titulo: 'Nuevo usuario' },
-  },
-  {
-    path: '/usuarios/:id',
-    name: 'usuario-editar',
-    component: () => import('./views/UsuarioFormView.vue'),
-    props: true,
-    meta: { permiso: 'usuarios.admin', titulo: 'Editar usuario' },
-  },
+  // Crear y editar se hacen en un modal dentro de /usuarios; estas rutas solo redirigen enlaces viejos.
+  { path: '/usuarios/:id', redirect: '/usuarios' },
 ]
 
 export default rutas

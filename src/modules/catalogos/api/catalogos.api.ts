@@ -11,10 +11,6 @@ export const obtener = <T>(clave: ClaveCatalogo) => api.get<Catalogo<T>>(`/api/c
 export const obtenerElemento = <T>(clave: ClaveCatalogo, elemento: string) =>
   api.get<T>(`/api/catalogos/${clave}/elementos/${encodeURIComponent(elemento)}`)
 
-/** PUT /api/catalogos/{clave} — reemplaza TODO el contenido (Root, Soporte). */
-export const reemplazar = (clave: ClaveCatalogo, contenido: unknown[]) =>
-  api.put<unknown>(`/api/catalogos/${clave}`, { contenido })
-
 /** POST /api/catalogos/{clave}/elementos — agrega un elemento (Root, Soporte). El body es el elemento tal cual. */
 export const agregarElemento = (clave: ClaveCatalogo, elemento: object) =>
   api.post<unknown>(`/api/catalogos/${clave}/elementos`, elemento)

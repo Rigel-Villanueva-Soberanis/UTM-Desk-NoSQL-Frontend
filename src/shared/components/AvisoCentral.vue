@@ -60,7 +60,7 @@ onBeforeUnmount(() => clearTimeout(temporizador))
     :show-header="false"
     :style="{ width: '26rem' }"
     :breakpoints="{ '640px': '92vw' }"
-    :pt="{ root: { 'data-aviso': actual?.severidad, role: estilo.rol === 'alert' ? 'alertdialog' : 'dialog' }, content: { style: 'padding: 28px 24px 8px' }, footer: { style: 'justify-content: center; padding: 8px 24px 24px' } }"
+    :pt="{ root: { 'data-aviso': actual?.severidad, role: estilo.rol === 'alert' ? 'alertdialog' : 'dialog' }, content: { style: 'padding: 28px 24px 8px; display: flex; flex-direction: column' }, footer: { style: 'justify-content: center; padding: 8px 24px 24px' } }"
     :base-z-index="2000"
   >
     <div v-if="actual" :key="actual.id" class="aviso" :class="estilo.clase" :role="estilo.rol" aria-live="assertive">
@@ -86,6 +86,14 @@ onBeforeUnmount(() => clearTimeout(temporizador))
   gap: 10px;
   text-align: center;
   min-width: 0;
+  /* Ancho fijo; el alto se ajusta al contenido (con un tope: si el texto es muy largo, el detalle se desplaza). */
+  width: 100%;
+}
+.titulo,
+.cuenta,
+.icono,
+.barra {
+  flex-shrink: 0;
 }
 .icono {
   font-size: 3rem;
@@ -113,7 +121,8 @@ onBeforeUnmount(() => clearTimeout(temporizador))
   color: var(--on-surface-variant);
   overflow-wrap: anywhere;
   white-space: pre-line;
-  max-height: 40vh;
+  width: 100%;
+  max-height: 11rem;
   overflow-y: auto;
 }
 .cuenta {

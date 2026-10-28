@@ -44,7 +44,7 @@ const quitar = () => {
   <section>
     <div class="pagina-titulo">
       <h1>Búsqueda</h1>
-      <p>Busca en el título y la descripción de todas las incidencias, de la más relevante a la menos.</p>
+      <p>Aquí ves todas las incidencias. Escribe para buscar en el título y la descripción (de la más relevante a la menos) y usa los filtros para afinar.</p>
     </div>
 
     <form class="tarjeta-base barra" role="search" novalidate @submit.prevent="buscar">
@@ -83,17 +83,8 @@ const quitar = () => {
       />
     </div>
 
-    <!-- Antes de buscar -->
-    <div v-if="!hayBusqueda" class="tarjeta-base bloque">
-      <PantallaVacia
-        icono="pi pi-search"
-        titulo="¿Qué quieres encontrar?"
-        texto="Escribe lo que buscas arriba. Los filtros se aplican junto con la búsqueda."
-      />
-    </div>
-
     <!-- Error -->
-    <div v-else-if="error" class="tarjeta-base bloque">
+    <div v-if="error" class="tarjeta-base bloque">
       <PantallaVacia icono="pi pi-exclamation-triangle" titulo="No se pudo buscar" :texto="error">
         <Button label="Reintentar" icon="pi pi-refresh" severity="secondary" @click="recargar" />
       </PantallaVacia>
@@ -102,9 +93,9 @@ const quitar = () => {
     <!-- Resultados -->
     <template v-else>
       <p v-if="datos && !cargando" class="resumen" aria-live="polite">
-        {{ datos.total }} {{ datos.total === 1 ? 'resultado' : 'resultados' }} para
-        «<strong class="termino" :title="q">{{ acortar(q, 60) }}</strong>»
-        <Button v-if="datos.total" label="Quitar búsqueda" icon="pi pi-times" severity="secondary" text size="small" @click="quitar" />
+        {{ datos.total }} {{ datos.total === 1 ? 'resultado' : 'resultados' }}<template v-if="hayBusqueda"> para
+        «<strong class="termino" :title="q">{{ acortar(q, 60) }}</strong>»</template>
+        <Button v-if="hayBusqueda && datos.total" label="Quitar búsqueda" icon="pi pi-times" severity="secondary" text size="small" @click="quitar" />
       </p>
       <div class="tarjeta-base bloque tabla">
         <TablaIncidencias
@@ -114,9 +105,9 @@ const quitar = () => {
           :pagina="filtros.pagina"
           :tamano-pagina="filtros.tamanoPagina"
           :hay-filtros="hayFiltros"
-          relevancia
+          :relevancia="hayBusqueda"
           titulo-vacio="Sin resultados"
-          :texto-vacio="`Ninguna incidencia coincide con «${acortar(q, 60)}». Prueba con otras palabras o quita alguna exclusión.`"
+          :texto-vacio="hayBusqueda ? `Ninguna incidencia coincide con «${acortar(q, 60)}». Prueba con otras palabras o quita alguna exclusión.` : 'No hay incidencias con esos filtros.'"
           @paginar="irAPagina"
           @limpiar="limpiarFiltros"
         />

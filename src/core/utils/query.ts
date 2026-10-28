@@ -14,6 +14,12 @@ export function entero(v: ValorQuery | undefined, defecto: number, min = 1, max 
   return Number.isInteger(n) && n >= min && n <= max ? n : defecto
 }
 
+/** Varios valores permitidos: acepta `?x=a&x=b` y `?x=a,b`; descarta los que no estén en la lista y los repetidos. */
+export function variosDe<T extends string>(v: ValorQuery | undefined, permitidos: readonly T[]): T[] {
+  const crudos = (Array.isArray(v) ? v : [v]).flatMap((x) => (x ?? '').slice(0, 200).split(','))
+  return [...new Set(crudos.map((x) => x.trim()))].filter((x): x is T => (permitidos as readonly string[]).includes(x))
+}
+
 export const booleano = (v: ValorQuery | undefined) => texto(v) === 'true'
 
 /** Texto que debe cumplir un patrón (p. ej. una fecha) o '' si no cumple. */
@@ -36,6 +42,10 @@ export function aQuery<T extends object>(filtros: T, defectos: T): LocationQuery
   const q: LocationQueryRaw = {}
   for (const [k, v] of Object.entries(filtros) as [keyof T & string, unknown][]) {
     if (v === '' || v === null || v === undefined || v === false) continue
+    if (Array.isArray(v)) {
+      if (v.length && JSON.stringify(v) !== JSON.stringify(defectos[k])) q[k] = v.map(String)
+      continue
+    }
     if (v === defectos[k]) continue
     q[k] = String(v)
   }

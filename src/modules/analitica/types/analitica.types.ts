@@ -1,12 +1,15 @@
-import type { Prioridad } from '@/modules/incidencias/types/incidencia.types'
+import type { Tiempo } from '@/core/types/tiempo'
+import type { Estado, Prioridad } from '@/modules/incidencias/types/incidencia.types'
 
 /** Fila de GET /api/analitica/tiempos-edificio. */
 export interface TiempoEdificio {
   edificio: string
   totalReportes: number
-  promedioHoras: number
-  minimoHoras: number
-  maximoHoras: number
+  tiempoPromedio: Tiempo
+  tiempoMinimo: Tiempo
+  tiempoMaximo: Tiempo
+  /** Suma de las horas registradas por los técnicos en ese edificio. */
+  tiempoTrabajado: Tiempo
 }
 
 export type OrdenTiempos = 'reportes' | 'tiempo'
@@ -32,9 +35,9 @@ export const FILTROS_TIEMPOS_VACIOS: FiltrosTiempos = {
 /** Data de GET /api/analitica/eficiencia-global. */
 export interface Eficiencia {
   totalIncidencias: number
-  horasHombreTotales: number
+  tiempoHombreTotal: Tiempo
   incidenciasConHoras: number
-  promedioHorasPorIncidencia: number
+  promedioPorIncidencia: Tiempo
   topTags: { tag: string; total: number }[]
   proveedoresExternos: {
     totalCasos: number
@@ -50,6 +53,8 @@ export interface FiltrosEficiencia {
   fechaHasta: string
   categoria: string
   edificio: string
+  /** Varios estados; vacío = todos (no se manda `estado`). */
+  estado: Estado[]
 }
 
 export const FILTROS_EFICIENCIA_VACIOS: FiltrosEficiencia = {
@@ -57,4 +62,5 @@ export const FILTROS_EFICIENCIA_VACIOS: FiltrosEficiencia = {
   fechaHasta: '',
   categoria: '',
   edificio: '',
+  estado: [],
 }

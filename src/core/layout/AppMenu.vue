@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { usePermisos } from '@/core/auth/usePermisos'
+import { origenExpediente } from '@/core/router/origen'
 import { MENU } from './menu'
 import { refrescarContadores, useContadores } from './useContadores'
 
@@ -27,6 +28,9 @@ const lista = computed(() => opciones.value.filter((o) => o.ruta !== '/incidenci
 
 /** Activa: la ruta exacta o una hija (el expediente cuelga de Incidencias), la más específica gana. */
 function esActiva(ruta: string) {
+  // En el detalle de una incidencia se sigue marcando la pantalla de la que se vino (Búsqueda, Bandeja o Incidencias).
+  if (route.name === 'expediente' && origenExpediente.value && opciones.value.some((o) => o.ruta === origenExpediente.value))
+    return ruta === origenExpediente.value
   const p = route.path
   const coincide = (r: string) => p === r || p.startsWith(r + '/')
   if (!coincide(ruta)) return false
@@ -45,10 +49,11 @@ const cuales = () => ({
   total: lista.value.some((o) => o.ruta === '/incidencias'),
   sinAsignar: lista.value.some((o) => o.ruta === '/bandeja'),
 })
-// Se actualizan al entrar y al cambiar de pantalla (con espera mínima de 10 s) y al volver a la pestaña.
-const alVolver = () => void refrescarContadores(cuales(), true)
+// Se actualizan al entrar, al cambiar de pantalla y al volver a la pestaña, con espera mínima de 60 s entre consultas
+// (y el listado de incidencias sin filtros ya los actualiza solo con el total que trae).
+const alVolver = () => void refrescarContadores(cuales())
 onMounted(() => {
-  void refrescarContadores(cuales(), true)
+  void refrescarContadores(cuales())
   window.addEventListener('focus', alVolver)
 })
 onBeforeUnmount(() => window.removeEventListener('focus', alVolver))

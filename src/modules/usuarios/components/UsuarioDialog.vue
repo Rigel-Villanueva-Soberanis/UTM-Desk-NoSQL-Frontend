@@ -8,67 +8,73 @@ import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
 import { LIMITES } from '@/core/utils/validacion'
 import CampoFormulario from '@/shared/components/CampoFormulario.vue'
-import NoEncontrado from '@/shared/components/NoEncontrado.vue'
-import PantallaVacia from '@/shared/components/PantallaVacia.vue'
+import DialogoAccion from '@/shared/components/DialogoAccion.vue'
 import { useFormUsuario } from '../composables/useFormUsuario'
 import { ESTADOS_CUENTA } from '../types/usuario.types'
 import { generarPassword } from '../utils/password'
 
+/** Crear (sin `id`) o editar (con `id`) un usuario en un modal. */
 const props = defineProps<{ id?: string }>()
+const emit = defineEmits<{ guardado: []; cerrado: [] }>()
+
+const abierto = ref(true)
 const idRef = computed(() => props.id)
 const {
   editando, form, errores, mensaje, enviando, cargando, cargandoCatalogos, errorCatalogos, errorCarga, mensajeCarga,
   roles, clasificaciones, requiereClasificacion, muestraClasificacion, esMiCuenta, hayCambios,
-  guardar, volver, reintentar, recargarCatalogos,
-} = useFormUsuario(idRef)
+  guardar, reintentar, recargarCatalogos,
+} = useFormUsuario(idRef, () => {
+  emit('guardado')
+  abierto.value = false
+})
 
-const verPassword = ref(false)
+const falla = computed(() => (errorCarga.value ? mensajeCarga.value || 'No se pudo cargar el usuario.' : errorCatalogos.value))
+const ocupado = computed(() => cargando.value || cargandoCatalogos.value)
+
 function generar() {
   form.password = generarPassword()
-  verPassword.value = true
 }
 
 async function enviar() {
-  const ok = await guardar()
-  if (!ok) {
-    // Lleva el foco al primer campo con error.
-    requestAnimationFrame(() => document.querySelector<HTMLElement>('.invalido input, .invalido .p-select')?.focus())
-  }
+  await guardar()
+  requestAnimationFrame(() => document.querySelector<HTMLElement>('.p-dialog .invalido input, .p-dialog .invalido .p-select')?.focus())
 }
 </script>
 
 <template>
-  <NoEncontrado v-if="errorCarga === 'no-encontrado'" titulo="Usuario no encontrado" texto="El usuario no existe o ya fue eliminado." />
-
-  <section v-else>
-    <div class="pagina-titulo">
-      <h1>{{ editando ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
-      <p>{{ editando ? 'Actualiza los datos de la cuenta.' : 'Crea una cuenta para una persona del sistema.' }}</p>
+  <DialogoAccion
+    v-model:visible="abierto"
+    :titulo="editando ? 'Editar usuario' : 'Nuevo usuario'"
+    :etiqueta-guardar="editando ? 'Guardar cambios' : 'Crear usuario'"
+    :icono-guardar="editando ? 'pi pi-check' : 'pi pi-user-plus'"
+    :enviando="enviando"
+    :sin-cambios="!!falla || ocupado || (editando && !hayCambios)"
+    :mensaje="mensaje"
+    ancho="46rem"
+    @guardar="enviar"
+    @cerrado="emit('cerrado')"
+  >
+    <div v-if="falla" class="falla">
+      <Message severity="error" :closable="false">{{ falla }}</Message>
+      <Button
+        label="Reintentar"
+        icon="pi pi-refresh"
+        severity="secondary"
+        size="small"
+        @click="errorCarga ? reintentar() : recargarCatalogos()"
+      />
     </div>
 
-    <div v-if="errorCarga === 'otro'" class="tarjeta-base">
-      <PantallaVacia icono="pi pi-exclamation-triangle" titulo="No se pudo cargar el usuario" :texto="mensajeCarga">
-        <Button label="Reintentar" icon="pi pi-refresh" severity="secondary" @click="reintentar" />
-      </PantallaVacia>
+    <div v-else-if="ocupado" class="esqueleto" aria-busy="true">
+      <Skeleton v-for="n in 4" :key="n" height="3rem" />
     </div>
 
-    <div v-else-if="errorCatalogos" class="tarjeta-base">
-      <PantallaVacia icono="pi pi-exclamation-triangle" titulo="No se pudieron cargar los roles" :texto="errorCatalogos">
-        <Button label="Reintentar" icon="pi pi-refresh" severity="secondary" @click="recargarCatalogos" />
-      </PantallaVacia>
-    </div>
-
-    <div v-else-if="cargando || cargandoCatalogos" class="tarjeta-base formulario" aria-busy="true" data-esqueleto>
-      <Skeleton v-for="n in 4" :key="n" height="3.2rem" />
-    </div>
-
-    <form v-else class="tarjeta-base formulario" novalidate @submit.prevent="enviar">
-      <Message v-if="mensaje" severity="error" :closable="false" class="mensaje">{{ mensaje }}</Message>
+    <template v-else>
       <Message v-if="esMiCuenta" severity="info" :closable="false">
         Es tu propia cuenta: no puedes cambiar tu rol ni su estado para no quedarte sin acceso.
       </Message>
 
-      <fieldset :disabled="cargando || enviando" class="grupo">
+      <fieldset :disabled="enviando" class="grupo">
         <legend>Datos personales</legend>
         <div class="rejilla">
           <CampoFormulario id="u-nombres" etiqueta="Nombres" requerido :error="errores.nombres" :contador="{ actual: form.nombres.length, max: LIMITES.nombres.max }">
@@ -83,7 +89,7 @@ async function enviar() {
         </div>
       </fieldset>
 
-      <fieldset :disabled="cargando || enviando" class="grupo">
+      <fieldset :disabled="enviando" class="grupo">
         <legend>Cuenta</legend>
         <div class="rejilla">
           <CampoFormulario
@@ -122,7 +128,7 @@ async function enviar() {
         </div>
       </fieldset>
 
-      <fieldset :disabled="cargando || enviando" class="grupo">
+      <fieldset :disabled="enviando" class="grupo">
         <legend>Rol y acceso</legend>
         <div class="rejilla">
           <CampoFormulario id="u-rol" etiqueta="Rol" requerido :error="errores.rolSistema">
@@ -134,7 +140,6 @@ async function enviar() {
               option-value="rol"
               placeholder="Selecciona un rol"
               :disabled="esMiCuenta"
-              :loading="cargandoCatalogos"
               :invalid="!!errores.rolSistema"
               fluid
             />
@@ -172,28 +177,11 @@ async function enviar() {
           </CampoFormulario>
         </div>
       </fieldset>
-
-      <div class="botones">
-        <Button type="button" label="Cancelar" severity="secondary" text :disabled="enviando" @click="volver" />
-        <Button
-          type="submit"
-          :label="editando ? 'Guardar cambios' : 'Crear usuario'"
-          :icon="editando ? 'pi pi-check' : 'pi pi-user-plus'"
-          :loading="enviando"
-          :disabled="cargando || cargandoCatalogos || (editando && !hayCambios)"
-        />
-      </div>
-    </form>
-  </section>
+    </template>
+  </DialogoAccion>
 </template>
 
 <style scoped>
-.formulario {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 56rem;
-}
 .grupo {
   border: 0;
   padding: 0;
@@ -207,19 +195,21 @@ legend {
 }
 .rejilla {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
 }
 .generar {
   align-self: flex-start;
 }
-.botones {
+.falla {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
 }
-.mensaje :deep(.p-message-text) {
-  overflow-wrap: anywhere;
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 </style>

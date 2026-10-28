@@ -12,7 +12,7 @@ export function useFiltrosUrl<T extends object>(defectos: T, leer: (q: LocationQ
 
   const filtros = computed(() => leer(route.query))
   const hayFiltros = computed(() =>
-    (Object.keys(defectos) as (keyof T)[]).some((k) => filtros.value[k] !== defectos[k]),
+    (Object.keys(defectos) as (keyof T)[]).some((k) => JSON.stringify(filtros.value[k]) !== JSON.stringify(defectos[k])),
   )
 
   const aplicar = (parcial: Partial<T>) =>

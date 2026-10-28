@@ -32,11 +32,11 @@ export function listar(f: FiltrosUsuarios) {
 /** GET /api/Usuario/{id} — el 404 lo muestra la propia pantalla. */
 export const obtener = (id: string) => api.get<Usuario>(base(id), { sinAviso: true })
 
-/** POST /api/Usuario → 201 con el usuario creado. */
-export const crear = (datos: NuevoUsuario) => api.post<Usuario>('/api/Usuario', datos)
+/** POST /api/Usuario → 201 con el usuario creado. El formulario muestra su propio aviso de error. */
+export const crear = (datos: NuevoUsuario) => api.post<Usuario>('/api/Usuario', datos, { sinAviso: true })
 
-/** PUT /api/Usuario/{id} */
-export const actualizar = (id: string, datos: EdicionUsuario) => api.put<Usuario>(base(id), datos)
+/** PUT /api/Usuario/{id} — el formulario muestra su propio aviso de error. */
+export const actualizar = (id: string, datos: EdicionUsuario) => api.put<Usuario>(base(id), datos, { sinAviso: true })
 
 /** PATCH /api/Usuario/{id}/password — restablece la contraseña (mínimo 8). */
 export const restablecerPassword = (id: string, nuevaPassword: string) =>

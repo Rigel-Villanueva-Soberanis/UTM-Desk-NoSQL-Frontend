@@ -7,7 +7,8 @@ export const LIMITES = {
   descripcion: { min: 10, max: 2000 },
   motivo: { min: 5, max: 500 },
   nota: { min: 3, max: 2000 },
-  horas: { min: 0.25, max: 24 },
+  /** Cada registro de tiempo: de 1 minuto a 24 horas (horas 0–24, minutos 0–59, enteros). */
+  tiempo: { maxHoras: 24, maxMinutos: 59 },
   comentarioHoras: { max: 300 },
   etiqueta: { min: 2, max: 30 },
   etiquetasPorLista: 10,

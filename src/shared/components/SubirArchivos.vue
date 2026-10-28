@@ -9,9 +9,9 @@ import {
   validarArchivo,
 } from '@/core/utils/archivos'
 import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
 import { useConfirmarEliminacion } from '../composables/useConfirmarEliminacion'
 import CampoError from './CampoError.vue'
+import VisorImagen from './VisorImagen.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -166,13 +166,12 @@ onBeforeUnmount(() => urls.forEach((u) => URL.revokeObjectURL(u)))
 
     <CampoError :mensaje="mensaje" />
 
-    <Dialog v-model:visible="visible" modal dismissableMask :content-style="{ overflow: 'hidden' }" :header="viendo?.name" :style="{ width: 'min(92vw, 900px)' }">
-      <img v-if="viendo" :src="vistaPrevia(viendo)" :alt="viendo.name" class="grande" :style="{ display: 'block', maxWidth: '100%', maxHeight: '75vh', width: 'auto', height: 'auto', margin: '0 auto', objectFit: 'contain' }" />
-      <template #footer>
+    <VisorImagen v-model:visible="visible" :src="viendo ? vistaPrevia(viendo) : ''" :titulo="viendo?.name">
+      <template #acciones>
         <Button label="Cancelar" severity="secondary" text data-accion="visor-cancelar" @click="viendo = null" />
         <Button label="Eliminar" icon="pi pi-trash" severity="danger" data-accion="visor-eliminar" @click="eliminarDelVisor" />
       </template>
-    </Dialog>
+    </VisorImagen>
   </div>
 </template>
 
@@ -296,13 +295,6 @@ onBeforeUnmount(() => urls.forEach((u) => URL.revokeObjectURL(u)))
   border: 0;
   background: none;
   cursor: zoom-in;
-}
-.grande {
-  display: block;
-  max-width: 100%;
-  max-height: 75vh;
-  margin: 0 auto;
-  object-fit: contain;
 }
 .quitar.ojo:hover {
   background: var(--surface-container);

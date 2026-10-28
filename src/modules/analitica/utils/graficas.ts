@@ -11,7 +11,7 @@ const REJILLA = '#e5eeff'
 export const etiquetaCorta = (t: string, max = 16) => acortar(t, max)
 
 /** Opciones comunes de las gráficas de barras. */
-export function opcionesBarras(opts: { horizontal?: boolean; tituloValor: string; entero?: boolean; etiquetas: string[]; extra?: (i: number) => string[] }) {
+export function opcionesBarras(opts: { horizontal?: boolean; tituloValor: string; entero?: boolean; etiquetas: string[]; extra?: (i: number) => string[]; valorTexto?: (i: number) => string }) {
   const eje = (esValor: boolean) => ({
     beginAtZero: esValor,
     grid: { color: esValor ? REJILLA : 'transparent' },
@@ -32,6 +32,7 @@ export function opcionesBarras(opts: { horizontal?: boolean; tituloValor: string
       tooltip: {
         callbacks: {
           title: (items: { dataIndex: number }[]) => opts.etiquetas[items[0]?.dataIndex ?? 0] ?? '',
+          ...(opts.valorTexto ? { label: (item: { dataIndex: number }) => `${opts.tituloValor}: ${opts.valorTexto!(item.dataIndex)}` } : {}),
           afterLabel: (item: { dataIndex: number }) => opts.extra?.(item.dataIndex) ?? [],
         },
       },

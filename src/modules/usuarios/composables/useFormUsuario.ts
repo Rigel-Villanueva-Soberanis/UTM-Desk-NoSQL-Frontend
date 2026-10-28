@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { computed, reactive, ref, watch, type Ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useSesionStore } from '@/core/auth/sesion.store'
 import { aviso } from '@/core/http/avisos'
 import { aMapa, estadoHttp, mensajeError } from '@/core/http/errores'
@@ -35,8 +34,7 @@ const limpio = (t: string) => limpiarEspacios(sinControl(t))
  * Formulario de usuario (Paso 11.1): crear (`id` vacío) o editar.
  * Las reglas son las del backend (#28/#29); el backend siempre tiene la última palabra.
  */
-export function useFormUsuario(id: Ref<string | undefined>) {
-  const router = useRouter()
+export function useFormUsuario(id: Ref<string | undefined>, alGuardar?: () => void) {
   const sesion = useSesionStore()
   const { roles, listo, cargando: cargandoCatalogos, error: errorCatalogos, recargar: recargarCatalogos } = useCatalogos()
 
@@ -162,12 +160,6 @@ export function useFormUsuario(id: Ref<string | undefined>) {
     return e
   }
 
-  /** Vuelve al listado con sus filtros (si venía de él); si no, al listado limpio. */
-  function volver() {
-    if (window.history.state?.back) router.back()
-    else void router.push('/usuarios')
-  }
-
   const hayCambios = computed(() => {
     const o = original.value
     if (!editando.value || !o) return true
@@ -209,7 +201,7 @@ export function useFormUsuario(id: Ref<string | undefined>) {
         await crear({ ...comun, usuario: form.usuario.trim(), password: form.password })
         aviso('success', 'Usuario creado', `${comun.nombres} ya puede iniciar sesión como ${form.usuario.trim()}.`)
       }
-      volver()
+      alGuardar?.()
       return true
     } catch (e) {
       const mapa = aMapa(e)
@@ -252,7 +244,6 @@ export function useFormUsuario(id: Ref<string | undefined>) {
     esMiCuenta,
     hayCambios,
     guardar,
-    volver,
     reintentar: cargar,
     recargarCatalogos,
   }

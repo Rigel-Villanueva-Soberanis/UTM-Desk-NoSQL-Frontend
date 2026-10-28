@@ -1,4 +1,5 @@
 import './assets/main.css'
+import './assets/paginador.css'
 import '@fontsource-variable/inter'
 import 'primeicons/primeicons.css'
 

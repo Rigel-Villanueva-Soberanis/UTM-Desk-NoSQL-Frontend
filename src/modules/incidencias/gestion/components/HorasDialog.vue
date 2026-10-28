@@ -3,6 +3,7 @@ import { reactive, watch } from 'vue'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import { primerError } from '@/core/http/errores'
+import { textoTiempo } from '@/core/types/tiempo'
 import { LIMITES, sinControl } from '@/core/utils/validacion'
 import CampoFormulario from '@/shared/components/CampoFormulario.vue'
 import DialogoAccion from '@/shared/components/DialogoAccion.vue'
@@ -14,31 +15,32 @@ const props = defineProps<{ incidencia: Incidencia }>()
 const emit = defineEmits<{ cerrar: []; actualizar: [] }>()
 
 const { abierto, enviando, errores, mensaje, limpiar, ejecutar } = useAccion(() => emit('actualizar'))
-const form = reactive({ horas: null as number | null, comentario: '' })
-watch(() => form.horas, () => limpiar('horas'))
+const form = reactive({ horas: 0 as number | null, minutos: 0 as number | null, comentario: '' })
+watch(() => [form.horas, form.minutos], () => limpiar('horas', 'minutos'))
 watch(() => form.comentario, () => limpiar('comentario'))
-
-const h = (n: number) => `${Number(n.toFixed(2))} h`
 
 function guardar() {
   const comentario = sinControl(form.comentario).trim()
+  const horas = form.horas ?? 0
+  const minutos = form.minutos ?? 0
   return ejecutar({
-    campos: ['horas', 'comentario'],
+    campos: ['horas', 'minutos', 'comentario'],
     validar: () => {
       const e: Record<string, string> = {}
-      const v = form.horas
-      if (v === null || Number.isNaN(v)) e.horas = 'Indica cuántas horas trabajaste.'
-      else if (v < LIMITES.horas.min || v > LIMITES.horas.max)
-        e.horas = `Las horas deben estar entre ${LIMITES.horas.min} y ${LIMITES.horas.max}.`
+      const { maxHoras, maxMinutos } = LIMITES.tiempo
+      if (!Number.isInteger(horas) || horas < 0 || horas > maxHoras) e.horas = `Las horas deben ser un número entero de 0 a ${maxHoras}.`
+      else if (!Number.isInteger(minutos) || minutos < 0 || minutos > maxMinutos) e.minutos = `Los minutos deben ser un número entero de 0 a ${maxMinutos}.`
+      else if (horas === 0 && minutos === 0) e.horas = 'Indica al menos 1 minuto de trabajo.'
+      else if (horas === maxHoras && minutos > 0) e.minutos = `Cada registro puede ser de máximo ${maxHoras} horas.`
       if (comentario.length > LIMITES.comentarioHoras.max)
         e.comentario = `El comentario no puede tener más de ${LIMITES.comentarioHoras.max} caracteres.`
       return e
     },
-    enviar: () => registrarHoras(props.incidencia.id, form.horas as number, comentario || undefined),
+    enviar: () => registrarHoras(props.incidencia.id, horas, minutos, comentario || undefined),
     exito: (r) => ({
-      titulo: 'Horas registradas',
+      titulo: 'Tiempo registrado',
       detalle: r
-        ? `Se sumaron ${h(r.horasRegistradas ?? form.horas ?? 0)}. Total acumulado: ${h(r.horasTotales ?? 0)}.`
+        ? `Se sumaron ${r.tiempoRegistrado?.texto ?? textoTiempo(horas, minutos)}. Total acumulado: ${r.tiempoTotal?.texto ?? '—'}.`
         : undefined,
     }),
   })
@@ -48,7 +50,7 @@ function guardar() {
 <template>
   <DialogoAccion
     v-model:visible="abierto"
-    titulo="Registrar horas"
+    titulo="Registrar tiempo"
     :contexto="`${incidencia.folio} · ${incidencia.titulo}`"
     icono-guardar="pi pi-clock"
     etiqueta-guardar="Registrar"
@@ -57,32 +59,46 @@ function guardar() {
     @guardar="guardar"
     @cerrado="emit('cerrar')"
   >
-    <p class="total">Horas acumuladas: <strong>{{ h(incidencia.horasInvertidas) }}</strong></p>
+    <p class="total">Tiempo acumulado: <strong>{{ incidencia.tiempoInvertido.texto }}</strong></p>
 
     <CampoFormulario
       id="horas"
-      etiqueta="Horas trabajadas"
+      etiqueta="Tiempo trabajado"
       requerido
-      :error="primerError(errores, 'horas')"
-      :ayuda="`De ${LIMITES.horas.min} a ${LIMITES.horas.max} horas. Se suman a las ya registradas.`"
+      :error="primerError(errores, 'horas') || primerError(errores, 'minutos')"
+      ayuda="Mínimo 1 minuto y máximo 24 horas por registro. Se suma al tiempo ya registrado."
     >
-      <InputNumber
-        v-model="form.horas"
-        input-id="horas"
-        :min="0"
-        :max="LIMITES.horas.max"
-        :step="0.25"
-        :min-fraction-digits="0"
-        :max-fraction-digits="2"
-        :use-grouping="false"
-        show-buttons
-        suffix=" h"
-        placeholder="Ej. 1.5"
-        :invalid="!!errores.horas"
-        :disabled="enviando"
-        autofocus
-        fluid
-      />
+      <div class="par">
+        <InputNumber
+          v-model="form.horas"
+          input-id="horas"
+          :min="0"
+          :max="LIMITES.tiempo.maxHoras"
+          :use-grouping="false"
+          :max-fraction-digits="0"
+          show-buttons
+          suffix=" h"
+          aria-label="Horas"
+          :invalid="!!errores.horas"
+          :disabled="enviando"
+          autofocus
+          fluid
+        />
+        <InputNumber
+          v-model="form.minutos"
+          input-id="minutos"
+          :min="0"
+          :max="LIMITES.tiempo.maxMinutos"
+          :use-grouping="false"
+          :max-fraction-digits="0"
+          show-buttons
+          suffix=" min"
+          aria-label="Minutos"
+          :invalid="!!errores.minutos"
+          :disabled="enviando"
+          fluid
+        />
+      </div>
     </CampoFormulario>
 
     <CampoFormulario
@@ -108,6 +124,11 @@ function guardar() {
 </template>
 
 <style scoped>
+.par {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 .total {
   color: var(--on-surface-variant);
 }

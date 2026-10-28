@@ -15,6 +15,7 @@ export const PERMISOS = {
   'incidencias.evidencias': ['root', 'reportante', 'tecnico'],
   'incidencias.asignar': ['root', 'soporte', 'administrativos'],
   'incidencias.cambiarEstado': ['root', 'soporte', 'administrativos', 'tecnico'],
+  'incidencias.cerrar': ['root', 'soporte', 'administrativos'],
   'incidencias.seguimiento': ['root', 'tecnico'],
   'incidencias.horas': ['root', 'tecnico'],
   'incidencias.tags': ['root', 'soporte', 'administrativos', 'tecnico'],

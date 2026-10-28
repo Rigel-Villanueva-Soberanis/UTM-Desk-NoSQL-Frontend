@@ -9,7 +9,7 @@ export const localeEs = {
   apply: 'Aplicar',
   emptyMessage: 'No hay opciones disponibles',
   emptyFilterMessage: 'Sin resultados',
-  emptySearchMessage: 'Sin resultados',
+  emptySearchMessage: 'Sin opciones encontradas',
   searchMessage: '{0} resultados disponibles',
   selectionMessage: '{0} elementos seleccionados',
   noSelectionMessage: 'Sin selección',

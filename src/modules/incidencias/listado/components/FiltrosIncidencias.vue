@@ -8,6 +8,7 @@ import { usePermisos } from '@/core/auth/usePermisos'
 import { aFechaIso, desdeFechaIso } from '@/core/utils/fechas'
 import { useCatalogos } from '@/modules/catalogos/composables/useCatalogos'
 import CampoError from '@/shared/components/CampoError.vue'
+import EtiquetaTag from '@/shared/components/EtiquetaTag.vue'
 import SelectorEtiquetas from '@/shared/components/SelectorEtiquetas.vue'
 import { ESTADOS, PRIORIDADES, type FiltrosIncidencias } from '../../types/incidencia.types'
 
@@ -141,9 +142,12 @@ function alCambiarFecha(cual: 'desde' | 'hasta', v: unknown) {
           input-id="f-tag"
           :model-value="modelValue.tag ? [modelValue.tag] : []"
           :max="1"
+          ocultar-elegidas
+          :permitir-nuevas="false"
           placeholder="Buscar etiqueta…"
           @update:model-value="(v) => emit('cambiar', { tag: v[0] ?? '' })"
         />
+        <EtiquetaTag v-if="modelValue.tag" :texto="modelValue.tag" accion="pi-times" :titulo="`Quitar «${modelValue.tag}»`" class="tag-filtro" @click="emit('cambiar', { tag: '' })" />
       </div>
 
       <div class="campo">
@@ -201,6 +205,10 @@ function alCambiarFecha(cual: 'desde' | 'hasta', v: unknown) {
 </template>
 
 <style scoped>
+.tag-filtro {
+  align-self: flex-start;
+  margin-top: 6px;
+}
 .rejilla {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));

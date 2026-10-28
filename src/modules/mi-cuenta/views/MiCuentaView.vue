@@ -29,16 +29,11 @@ const cambiarPestana = (v: string | number) =>
 const perfil = useMiPerfil()
 const pass = useMiPassword()
 
-const datosBloqueados = computed(() => {
-  const c = perfil.cuenta
-  return [
-    { id: 'mc-usuario', etiqueta: 'Usuario', valor: c.usuario },
-    { id: 'mc-rol', etiqueta: 'Rol', valor: c.rol },
-    { id: 'mc-clasificacion', etiqueta: 'Clasificación', valor: c.clasificacion },
-    { id: 'mc-estado', etiqueta: 'Estado de la cuenta', valor: c.estado },
-    { id: 'mc-creada', etiqueta: 'Cuenta creada', valor: c.creada },
-  ]
+const iniciales = computed(() => {
+  const partes = (usuario.value?.nombreCompleto ?? '').trim().split(/\s+/).filter(Boolean)
+  return ((partes[0]?.[0] ?? '') + (partes.length > 1 ? partes[partes.length - 1]![0] : '')).toUpperCase() || '?'
 })
+const activa = computed(() => /activ/i.test(perfil.cuenta.estado ?? '') && !/inactiv/i.test(perfil.cuenta.estado ?? ''))
 
 const enfocarError = () =>
   requestAnimationFrame(() => document.querySelector<HTMLElement>('.invalido input')?.focus())
@@ -58,55 +53,81 @@ async function guardarPassword() {
     </div>
 
     <div class="tarjeta-base contenedor">
-      <div class="resumen">
-        <span class="nombre una-linea" :title="usuario?.nombreCompleto">{{ usuario?.nombreCompleto }}</span>
-        <small class="una-linea">
-          @{{ usuario?.usuario }} · {{ rol ? ETIQUETA_ROL[rol] : '' }}<template v-if="usuario?.clasificacion"> · {{ usuario.clasificacion }}</template>
-        </small>
-      </div>
+      <header class="resumen">
+        <span class="avatar" aria-hidden="true">{{ iniciales }}</span>
+        <div class="quien">
+          <span class="nombre una-linea" :title="usuario?.nombreCompleto">{{ usuario?.nombreCompleto }}</span>
+          <small class="una-linea">@{{ usuario?.usuario }} · {{ rol ? ETIQUETA_ROL[rol] : '' }}</small>
+        </div>
+      </header>
 
       <Tabs :value="pestana" @update:value="cambiarPestana">
         <TabList>
-          <Tab value="perfil" data-tab="perfil">Perfil</Tab>
-          <Tab value="password" data-tab="password">Contraseña</Tab>
+          <Tab value="perfil" data-tab="perfil"><i class="pi pi-user" aria-hidden="true" /> Perfil</Tab>
+          <Tab value="password" data-tab="password"><i class="pi pi-key" aria-hidden="true" /> Contraseña</Tab>
         </TabList>
         <TabPanels>
           <TabPanel value="perfil">
-            <form class="formulario" novalidate @submit.prevent="guardarPerfil">
-              <Message v-if="perfil.mensaje.value" severity="error" :closable="false" class="mensaje">{{ perfil.mensaje.value }}</Message>
-              <Message v-if="perfil.faltaDesglose.value" severity="info" :closable="false">
-                Tu sesión es anterior a esta pantalla y no trae tu nombre por partes: escríbelo y guarda (o vuelve a iniciar sesión).
-              </Message>
-              <CampoFormulario id="mp-nombres" etiqueta="Nombres" requerido :error="perfil.errores.value.nombres" :contador="{ actual: perfil.form.nombres.length, max: LIMITES.nombres.max }">
-                <InputText id="mp-nombres" v-model="perfil.form.nombres" :maxlength="LIMITES.nombres.max" autocomplete="given-name" :invalid="!!perfil.errores.value.nombres" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
-              </CampoFormulario>
-              <CampoFormulario id="mp-paterno" etiqueta="Apellido paterno" requerido :error="perfil.errores.value.apellidoPaterno" :contador="{ actual: perfil.form.apellidoPaterno.length, max: LIMITES.apellidoPaterno.max }">
-                <InputText id="mp-paterno" v-model="perfil.form.apellidoPaterno" :maxlength="LIMITES.apellidoPaterno.max" autocomplete="family-name" :invalid="!!perfil.errores.value.apellidoPaterno" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
-              </CampoFormulario>
-              <CampoFormulario id="mp-materno" etiqueta="Apellido materno" opcional :error="perfil.errores.value.apellidoMaterno" :contador="{ actual: perfil.form.apellidoMaterno.length, max: LIMITES.apellidoMaterno.max }">
-                <InputText id="mp-materno" v-model="perfil.form.apellidoMaterno" :maxlength="LIMITES.apellidoMaterno.max" :invalid="!!perfil.errores.value.apellidoMaterno" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
-              </CampoFormulario>
-              <CampoFormulario id="mp-correo" etiqueta="Correo" requerido :error="perfil.errores.value.correo" :contador="{ actual: perfil.form.correo.length, max: LIMITES.correo.max }">
-                <InputText id="mp-correo" v-model="perfil.form.correo" type="email" :maxlength="LIMITES.correo.max" autocomplete="email" :invalid="!!perfil.errores.value.correo" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
-              </CampoFormulario>
-              <section class="cuenta" aria-label="Datos de la cuenta (solo lectura)">
-                <h3><i class="pi pi-lock" aria-hidden="true" /> Datos de la cuenta <small>Bloqueados: los administra Soporte de TI</small></h3>
-                <div class="rejilla">
-                  <div v-for="d in datosBloqueados" :key="d.id" class="bloq">
-                    <label :for="d.id">{{ d.etiqueta }}</label>
-                    <InputText :id="d.id" :model-value="d.valor || '—'" disabled readonly fluid />
-                  </div>
+            <div class="cols">
+              <form class="formulario" novalidate @submit.prevent="guardarPerfil">
+                <Message v-if="perfil.mensaje.value" severity="error" :closable="false" class="mensaje">{{ perfil.mensaje.value }}</Message>
+                <Message v-if="perfil.faltaDesglose.value" severity="info" :closable="false">
+                  Tu sesión es anterior a esta pantalla y no trae tu nombre por partes: escríbelo y guarda (o vuelve a iniciar sesión).
+                </Message>
+                <CampoFormulario id="mp-nombres" etiqueta="Nombres" requerido :error="perfil.errores.value.nombres" :contador="{ actual: perfil.form.nombres.length, max: LIMITES.nombres.max }">
+                  <InputText id="mp-nombres" v-model="perfil.form.nombres" :maxlength="LIMITES.nombres.max" autocomplete="given-name" :invalid="!!perfil.errores.value.nombres" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
+                </CampoFormulario>
+                <div class="dos">
+                  <CampoFormulario id="mp-paterno" etiqueta="Apellido paterno" requerido :error="perfil.errores.value.apellidoPaterno" :contador="{ actual: perfil.form.apellidoPaterno.length, max: LIMITES.apellidoPaterno.max }">
+                    <InputText id="mp-paterno" v-model="perfil.form.apellidoPaterno" :maxlength="LIMITES.apellidoPaterno.max" autocomplete="family-name" :invalid="!!perfil.errores.value.apellidoPaterno" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
+                  </CampoFormulario>
+                  <CampoFormulario id="mp-materno" etiqueta="Apellido materno" opcional :error="perfil.errores.value.apellidoMaterno" :contador="{ actual: perfil.form.apellidoMaterno.length, max: LIMITES.apellidoMaterno.max }">
+                    <InputText id="mp-materno" v-model="perfil.form.apellidoMaterno" :maxlength="LIMITES.apellidoMaterno.max" :invalid="!!perfil.errores.value.apellidoMaterno" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
+                  </CampoFormulario>
                 </div>
-              </section>
-              <p class="nota">Tu usuario, rol y clasificación solo los puede cambiar Soporte de TI.</p>
-              <div class="botones">
-                <Button type="submit" label="Guardar cambios" icon="pi pi-check" :loading="perfil.enviando.value" :disabled="!perfil.hayCambios.value || perfil.cargando.value" />
-              </div>
-            </form>
+                <CampoFormulario id="mp-correo" etiqueta="Correo" requerido :error="perfil.errores.value.correo" :contador="{ actual: perfil.form.correo.length, max: LIMITES.correo.max }">
+                  <InputText id="mp-correo" v-model="perfil.form.correo" type="email" :maxlength="LIMITES.correo.max" autocomplete="email" :invalid="!!perfil.errores.value.correo" :disabled="perfil.enviando.value || perfil.cargando.value" fluid />
+                </CampoFormulario>
+                <div class="botones">
+                  <Button type="submit" label="Guardar cambios" icon="pi pi-check" :loading="perfil.enviando.value" :disabled="!perfil.hayCambios.value || perfil.cargando.value" />
+                </div>
+              </form>
+
+              <aside class="cuenta" aria-label="Datos de la cuenta (solo lectura)">
+                <h3><i class="pi pi-lock" aria-hidden="true" /> Datos de la cuenta</h3>
+                <p class="sub">Bloqueados: los administra Soporte de TI</p>
+                <dl class="datos">
+                  <div class="dato">
+                    <dt>Usuario</dt>
+                    <dd class="caja mono"><span class="una-linea">{{ perfil.cuenta.usuario || '—' }}</span><i class="pi pi-lock" aria-hidden="true" /></dd>
+                  </div>
+                  <div class="dato">
+                    <dt>Rol</dt>
+                    <dd class="caja"><span class="una-linea">{{ perfil.cuenta.rol || '—' }}</span></dd>
+                  </div>
+                  <div class="dato">
+                    <dt>Clasificación</dt>
+                    <dd class="caja"><span class="una-linea">{{ perfil.cuenta.clasificacion || '—' }}</span></dd>
+                  </div>
+                  <div class="dato">
+                    <dt>Estado de la cuenta</dt>
+                    <dd class="caja">
+                      <span class="punto" :class="{ ok: activa }" aria-hidden="true" />
+                      <span class="una-linea">{{ perfil.cuenta.estado || '—' }}</span>
+                    </dd>
+                  </div>
+                  <div class="dato">
+                    <dt>Cuenta creada</dt>
+                    <dd class="caja"><i class="pi pi-calendar" aria-hidden="true" /><span class="una-linea">{{ perfil.cuenta.creada || '—' }}</span></dd>
+                  </div>
+                </dl>
+                <p class="nota">Tu usuario, rol y clasificación solo los puede cambiar Soporte de TI.</p>
+              </aside>
+            </div>
           </TabPanel>
 
           <TabPanel value="password">
-            <form class="formulario" novalidate @submit.prevent="guardarPassword">
+            <form class="formulario angosto" novalidate @submit.prevent="guardarPassword">
               <Message v-if="pass.mensaje.value" severity="error" :closable="false" class="mensaje">{{ pass.mensaje.value }}</Message>
               <CampoFormulario id="pw-actual" etiqueta="Contraseña actual" requerido :error="pass.errores.value.passwordActual">
                 <Password v-model="pass.form.passwordActual" input-id="pw-actual" :feedback="false" toggle-mask :maxlength="LIMITES.password.max" autocomplete="current-password" :invalid="!!pass.errores.value.passwordActual" :disabled="pass.enviando.value" fluid />
@@ -130,21 +151,55 @@ async function guardarPassword() {
 
 <style scoped>
 .contenedor {
-  max-width: 40rem;
+  max-width: none;
+  width: 100%;
 }
 .resumen {
   display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--outline-variant);
+  min-width: 0;
+}
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 16px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+.quien {
+  display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: 12px;
   min-width: 0;
 }
 .nombre {
   font-weight: 700;
   font-size: 1.1rem;
 }
-.resumen small {
+.quien small {
   color: var(--on-surface-variant);
+}
+:deep(.p-tab) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 24px;
+  padding-top: 8px;
+  align-items: start;
 }
 .formulario {
   display: flex;
@@ -152,49 +207,88 @@ async function guardarPassword() {
   gap: 16px;
   padding-top: 8px;
 }
-.nota {
-  margin: 0;
-  color: var(--on-surface-variant);
-  font-size: 0.85rem;
+.formulario.angosto {
+  max-width: 36rem;
+}
+.dos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 .cuenta {
-  padding: 14px 16px;
+  padding: 16px;
   background: var(--surface-low);
-  border: 1px dashed var(--outline-variant);
-  border-radius: 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 14px;
+  margin-top: 8px;
 }
 .cuenta h3 {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  margin: 0 0 12px;
-  font-size: 0.9rem;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
 }
-.cuenta h3 small {
-  font-weight: 400;
+.sub {
+  margin: 2px 0 14px;
   color: var(--on-surface-variant);
+  font-size: 0.8rem;
 }
-.rejilla {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
 }
-.bloq {
+.dato {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
-.bloq label {
-  font-size: 0.78rem;
+.dato dt {
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--on-surface-variant);
 }
-@media (max-width: 560px) {
-  .rejilla {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.caja {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  min-width: 0;
+  border: 1px solid var(--outline-variant);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--outline-variant) 25%, transparent);
+  font-size: 0.9rem;
+}
+.caja .una-linea {
+  flex: 1;
+  min-width: 0;
+}
+.caja i {
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+}
+.mono .una-linea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.punto {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--on-surface-variant);
+}
+.punto.ok {
+  background: #16a34a;
+}
+.nota {
+  margin: 14px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 .botones {
   display: flex;
@@ -202,5 +296,15 @@ async function guardarPassword() {
 }
 .mensaje :deep(.p-message-text) {
   overflow-wrap: anywhere;
+}
+@media (max-width: 860px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .dos {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

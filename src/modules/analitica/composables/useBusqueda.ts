@@ -10,6 +10,7 @@ import {
   type FiltrosIncidencias,
   type IncidenciaResumen,
 } from '@/modules/incidencias/types/incidencia.types'
+import { listar } from '@/modules/incidencias/api/incidencias.api'
 import { buscar } from '../api/analitica.api'
 
 /** Límites de `q` en el backend. */
@@ -18,7 +19,8 @@ export const Q_MAX = 100
 
 /**
  * Búsqueda de texto (Paso 10.1). Igual que el listado, la URL manda: `?q=…&estado=…&pagina=…`.
- * Sin una búsqueda válida (2–100 caracteres) no se pide nada al backend.
+ * Sin texto de búsqueda válido (2–100 caracteres) se muestran TODAS las incidencias (GET /api/incidencias) con
+ * los filtros elegidos; al escribir algo se pasa a GET /api/incidencias/buscar, ordenado por relevancia.
  */
 export function useBusqueda() {
   const route = useRoute()
@@ -46,14 +48,9 @@ export function useBusqueda() {
     const id = ++ultimaPeticion
     error.value = ''
     errorQ.value = ''
-    if (!hayBusqueda.value) {
-      datos.value = null
-      cargando.value = false
-      return
-    }
     cargando.value = true
     try {
-      const r = await buscar(q.value, filtros.value)
+      const r = hayBusqueda.value ? await buscar(q.value, filtros.value) : await listar(filtros.value)
       if (id !== ultimaPeticion) return
       datos.value = r
       if (!r.items.length && r.total > 0 && filtros.value.pagina > r.totalPaginas)
@@ -86,6 +83,12 @@ export function useBusqueda() {
   /** Lanza una búsqueda nueva (vuelve a la página 1). Regresa false si el texto no es válido. */
   function enviar(entrada: string): boolean {
     const v = limpiarEspacios(sinControl(entrada))
+    if (!v) {
+      // Campo vacío: vuelve a mostrar todo (con los filtros elegidos).
+      errorQ.value = ''
+      void navegar('', { ...filtros.value, pagina: 1 })
+      return true
+    }
     if (v.length < Q_MIN) {
       errorQ.value = `Escribe al menos ${Q_MIN} caracteres para buscar.`
       return false

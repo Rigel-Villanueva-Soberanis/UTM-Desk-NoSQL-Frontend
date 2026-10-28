@@ -1,7 +1,8 @@
 import { ref, watch } from 'vue'
 import { useRoute, type LocationQuery } from 'vue-router'
 import { mensajeError } from '@/core/http/errores'
-import { conPatron, texto } from '@/core/utils/query'
+import { conPatron, texto, variosDe } from '@/core/utils/query'
+import { ESTADOS } from '@/modules/incidencias/types/incidencia.types'
 import { eficienciaGlobal } from '../api/analitica.api'
 import {
   FILTROS_EFICIENCIA_VACIOS,
@@ -18,6 +19,7 @@ function desdeQuery(q: LocationQuery): FiltrosEficiencia {
     fechaHasta: conPatron(q.fechaHasta, FECHA),
     categoria: texto(q.categoria),
     edificio: texto(q.edificio),
+    estado: variosDe(q.estado, ESTADOS.map((e) => e.valor)),
   }
 }
 

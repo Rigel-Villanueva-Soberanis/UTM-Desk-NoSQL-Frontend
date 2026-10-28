@@ -1,3 +1,4 @@
+import { normalizarTiempo } from '@/core/types/tiempo'
 import type { Incidencia } from '../types/incidencia.types'
 
 /**
@@ -13,7 +14,7 @@ export function normalizarIncidencia(i: Incidencia): Incidencia {
     tags: Array.isArray(i.tags) ? i.tags : [],
     historialSeguimiento: Array.isArray(i.historialSeguimiento) ? i.historialSeguimiento : [],
     evidenciasAdjuntas: Array.isArray(i.evidenciasAdjuntas) ? i.evidenciasAdjuntas : [],
-    horasInvertidas: Number(i.horasInvertidas) || 0,
+    tiempoInvertido: normalizarTiempo(i.tiempoInvertido),
     ubicacion: i.ubicacion ?? { clave: '', edificio: '', aula: '' },
     datosReportante: i.datosReportante ?? { idUsuario: '', nombre: '—' },
     tecnicoAsignado: i.tecnicoAsignado ?? null,

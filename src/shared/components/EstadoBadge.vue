@@ -8,12 +8,9 @@ const props = defineProps<{ estado: string }>()
 const MAPA: Record<string, { etiqueta: string; severity: 'info' | 'warn' | 'success' | 'secondary'; estilo?: Record<string, string> }> = {
   abierta: { etiqueta: 'Abierta', severity: 'info' },
   'en proceso': { etiqueta: 'En proceso', severity: 'warn' },
-  'por autorizar': {
-    etiqueta: 'Por autorizar',
-    severity: 'secondary',
-    estilo: { background: '#ede9fe', color: '#5b21b6' },
-  },
+  'en espera': { etiqueta: 'En espera', severity: 'secondary', estilo: { background: 'color-mix(in srgb, #7c3aed 14%, transparent)', color: '#6d28d9' } },
   resuelta: { etiqueta: 'Resuelta', severity: 'success' },
+  cerrada: { etiqueta: 'Cerrada', severity: 'secondary', estilo: { background: 'color-mix(in srgb, #0f766e 16%, transparent)', color: '#0f766e' } },
   cancelada: { etiqueta: 'Cancelada', severity: 'secondary' },
 }
 

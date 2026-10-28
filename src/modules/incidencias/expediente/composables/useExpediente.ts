@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ref, watch, type Ref } from 'vue'
+import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { aviso } from '@/core/http/avisos'
 import { mensajeError } from '@/core/http/errores'
 import { obtener } from '../../api/incidencias.api'
@@ -41,6 +41,34 @@ export function useExpediente(id: Ref<string>) {
   }
 
   watch(id, () => void cargar(false), { immediate: true })
+
+  /**
+   * Las URLs de las evidencias caducan (`venceEn`): poco antes de que venza la primera se vuelve a pedir el
+   * expediente en silencio para renovarlas, y también al volver a la pestaña si ya vencieron.
+   */
+  const MARGEN_MS = 60_000
+  let temporizador: ReturnType<typeof setTimeout> | undefined
+  const vencimiento = () => {
+    const t = (incidencia.value?.evidenciasAdjuntas ?? []).map((e) => Date.parse(e.venceEn ?? '')).filter((n) => Number.isFinite(n))
+    return t.length ? Math.min(...t) : null
+  }
+  watch(incidencia, () => {
+    clearTimeout(temporizador)
+    const v = vencimiento()
+    if (v === null) return
+    // setTimeout no admite esperas enormes; con tope de 24 h se vuelve a evaluar.
+    const espera = Math.min(Math.max(v - Date.now() - MARGEN_MS, 30_000), 24 * 3_600_000)
+    temporizador = setTimeout(() => void cargar(true), espera)
+  })
+  const alVolver = () => {
+    const v = vencimiento()
+    if (v !== null && v - Date.now() < MARGEN_MS) void cargar(true)
+  }
+  window.addEventListener('focus', alVolver)
+  onBeforeUnmount(() => {
+    clearTimeout(temporizador)
+    window.removeEventListener('focus', alVolver)
+  })
 
   return {
     incidencia,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { PAGINADOR } from '@/shared/config/paginador'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Column from 'primevue/column'
 import DataTable, { type DataTablePageEvent, type DataTableRowClickEvent } from 'primevue/datatable'
@@ -10,22 +10,20 @@ import Skeleton from 'primevue/skeleton'
 import Tag from 'primevue/tag'
 import { usePermisos } from '@/core/auth/usePermisos'
 import { ETIQUETA_ROL, normalizarRol } from '@/core/auth/permisos'
-import { formatearDia } from '@/core/utils/fechas'
 import { normalizarTexto } from '@/core/utils/texto'
 import { useCatalogos } from '@/modules/catalogos/composables/useCatalogos'
 import PantallaVacia from '@/shared/components/PantallaVacia.vue'
+import UsuarioDialog from '../components/UsuarioDialog.vue'
 import RestablecerPasswordDialog from '../components/RestablecerPasswordDialog.vue'
 import { useEliminarUsuario } from '../composables/useEliminarUsuario'
 import { useUsuarios } from '../composables/useUsuarios'
 import { ESTADOS_CUENTA, type Usuario } from '../types/usuario.types'
 
-const router = useRouter()
 const { usuario: yo } = usePermisos()
 const { roles } = useCatalogos()
 const { filtros, datos, cargando, error, hayFiltros, aplicarFiltros, irAPagina, limpiar, recargar } = useUsuarios()
 const { pedir } = useEliminarUsuario()
 
-const TAMANOS = [10, 20, 50]
 
 // Búsqueda con espera (400 ms) para no pedir en cada tecla.
 const busqueda = ref(filtros.value.busqueda)
@@ -65,7 +63,9 @@ const esYo = (u: Usuario) => u.id === yo.value?.id
 
 const primero = computed(() => (filtros.value.pagina - 1) * filtros.value.tamanoPagina)
 const alPaginar = (e: DataTablePageEvent) => irAPagina(e.page + 1, e.rows)
-const editar = (id: string) => router.push(`/usuarios/${id}`)
+// Crear / editar se hace en un modal: undefined = cerrado, '' = nuevo, id = editar.
+const formulario = ref<string | undefined>(undefined)
+const editar = (id: string) => { formulario.value = id }
 const alHacerClic = (e: DataTableRowClickEvent) => {
   const t = e.originalEvent?.target as HTMLElement | null
   if (t?.closest('button, a')) return
@@ -82,7 +82,7 @@ const paraPassword = ref<Usuario | null>(null)
         <h1>Usuarios</h1>
         <p>Crea y administra las cuentas del sistema.</p>
       </div>
-      <Button label="Nuevo usuario" icon="pi pi-plus" @click="router.push('/usuarios/nuevo')" />
+      <Button label="Nuevo usuario" icon="pi pi-plus" @click="formulario = ''" />
     </div>
 
     <div class="tarjeta-base bloque">
@@ -155,15 +155,12 @@ const paraPassword = ref<Usuario | null>(null)
       <DataTable
         :value="datos?.items ?? []"
         data-key="id"
+        v-bind="PAGINADOR"
         lazy
-        paginator
         :rows="filtros.tamanoPagina"
         :first="primero"
         :total-records="datos?.total ?? 0"
-        :rows-per-page-options="TAMANOS"
         :loading="cargando"
-        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
-        current-page-report-template="{first}–{last} de {totalRecords}"
         row-hover
         :row-class="() => 'fila'"
         scrollable
@@ -190,6 +187,7 @@ const paraPassword = ref<Usuario | null>(null)
         <Column header="Nombre" style="min-width: 11rem">
           <template #body="{ data }">
             <span class="celda una-linea nombre" :title="data.nombreCompleto">{{ data.nombreCompleto }}</span>
+            <small v-if="data.clasificacionRol" class="celda una-linea sub" :title="data.clasificacionRol">{{ data.clasificacionRol }}</small>
           </template>
         </Column>
         <Column header="Usuario" style="min-width: 8rem">
@@ -207,19 +205,10 @@ const paraPassword = ref<Usuario | null>(null)
             <span class="celda una-linea">{{ etiquetaRol(data.rolSistema) }}</span>
           </template>
         </Column>
-        <Column header="Clasificación" style="min-width: 8rem">
-          <template #body="{ data }">
-            <span v-if="data.clasificacionRol" class="celda una-linea" :title="data.clasificacionRol">{{ data.clasificacionRol }}</span>
-            <span v-else class="sin">—</span>
-          </template>
-        </Column>
         <Column header="Estado" style="min-width: 7rem">
           <template #body="{ data }">
             <Tag :value="etiquetaEstado(data.estadoCuenta)" :severity="severidad(data.estadoCuenta)" :data-estado="data.estadoCuenta" />
           </template>
-        </Column>
-        <Column header="Alta" style="min-width: 7rem">
-          <template #body="{ data }">{{ formatearDia(data.fechaCreacion) }}</template>
         </Column>
         <Column header="Acciones" style="min-width: 9rem">
           <template #body="{ data }">
@@ -243,6 +232,13 @@ const paraPassword = ref<Usuario | null>(null)
         </Column>
       </DataTable>
     </div>
+
+    <UsuarioDialog
+      v-if="formulario !== undefined"
+      :id="formulario || undefined"
+      @guardado="recargar"
+      @cerrado="formulario = undefined"
+    />
 
     <RestablecerPasswordDialog
       v-if="paraPassword"
@@ -298,8 +294,9 @@ label {
 .nombre {
   font-weight: 600;
 }
-.sin {
+.sub {
   color: var(--on-surface-variant);
+  font-size: 0.78rem;
 }
 .acciones {
   display: flex;

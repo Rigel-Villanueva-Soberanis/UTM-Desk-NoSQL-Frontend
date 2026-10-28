@@ -231,7 +231,7 @@ function salir() {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 24px 16px;
 }
 .velo {
   display: none;

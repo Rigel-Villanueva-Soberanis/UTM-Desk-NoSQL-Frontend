@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { aHoras } from '@/core/types/tiempo'
+import type { TiempoEdificio } from '../types/analitica.types'
 import Button from 'primevue/button'
 import Column from 'primevue/column'
 import DataTable from 'primevue/datatable'
@@ -22,8 +24,6 @@ const ORDENES = [
   { valor: 'tiempo', etiqueta: 'Mayor tiempo promedio' },
 ]
 
-/** Horas con hasta 2 decimales ("15 h", "3.5 h"). */
-const horas = (n: number) => `${Number(Number(n ?? 0).toFixed(2)).toLocaleString('es-MX')} h`
 
 const etiquetas = computed(() => datos.value.map((d) => d.edificio))
 
@@ -31,8 +31,8 @@ const grafica = computed(() => ({
   labels: etiquetas.value,
   datasets: [
     {
-      label: 'Promedio de horas',
-      data: datos.value.map((d) => d.promedioHoras),
+      label: 'Tiempo promedio (horas)',
+      data: datos.value.map((d) => aHoras(d.tiempoPromedio)),
       backgroundColor: PALETA[0],
       borderRadius: 6,
       maxBarThickness: 56,
@@ -41,16 +41,17 @@ const grafica = computed(() => ({
 }))
 const opciones = computed(() =>
   opcionesBarras({
-    tituloValor: 'Promedio de horas',
+    tituloValor: 'Tiempo promedio',
+    valorTexto: (i) => datos.value[i]?.tiempoPromedio.texto ?? '',
     etiquetas: etiquetas.value,
     extra: (i) => {
       const d = datos.value[i]
-      return d ? [`Reportes: ${d.totalReportes}`, `Mínimo: ${horas(d.minimoHoras)}`, `Máximo: ${horas(d.maximoHoras)}`] : []
+      return d ? [`Reportes: ${d.totalReportes}`, `Mínimo: ${d.tiempoMinimo.texto}`, `Máximo: ${d.tiempoMaximo.texto}`] : []
     },
   }),
 )
 const descripcion = computed(
-  () => 'Promedio de horas de resolución por edificio: ' + datos.value.map((d) => `${d.edificio} ${horas(d.promedioHoras)}`).join('; '),
+  () => 'Tiempo promedio de resolución por edificio: ' + datos.value.map((d) => `${d.edificio} ${d.tiempoPromedio.texto}`).join('; '),
 )
 /** Con muchos edificios la gráfica se desplaza en horizontal en lugar de aplastar las barras. */
 const anchoMinimo = computed(() => `${Math.max(0, datos.value.length * 72)}px`)
@@ -138,7 +139,7 @@ const anchoMinimo = computed(() => `${Math.max(0, datos.value.length * 72)}px`)
       <PantallaVacia
         icono="pi pi-chart-bar"
         titulo="Sin datos"
-        :texto="hayFiltros ? 'No hay incidencias resueltas con esos filtros.' : 'Todavía no hay incidencias resueltas para calcular tiempos.'"
+        :texto="hayFiltros ? 'No hay incidencias resueltas o cerradas con esos filtros.' : 'Todavía no hay incidencias resueltas o cerradas para calcular tiempos.'"
       >
         <Button v-if="hayFiltros" label="Limpiar filtros" severity="secondary" size="small" @click="limpiar" />
       </PantallaVacia>
@@ -156,14 +157,17 @@ const anchoMinimo = computed(() => `${Math.max(0, datos.value.length * 72)}px`)
             <template #body="{ data }"><span class="max-2-lineas" :title="data.edificio">{{ data.edificio }}</span></template>
           </Column>
           <Column field="totalReportes" header="Reportes" sortable style="min-width: 7rem" />
-          <Column field="promedioHoras" header="Promedio" sortable style="min-width: 7rem">
-            <template #body="{ data }">{{ horas(data.promedioHoras) }}</template>
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoPromedio)" header="Promedio" sortable style="min-width: 7rem">
+            <template #body="{ data }">{{ data.tiempoPromedio.texto }}</template>
           </Column>
-          <Column field="minimoHoras" header="Mínimo" sortable style="min-width: 7rem">
-            <template #body="{ data }">{{ horas(data.minimoHoras) }}</template>
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMinimo)" header="Mínimo" sortable style="min-width: 7rem">
+            <template #body="{ data }">{{ data.tiempoMinimo.texto }}</template>
           </Column>
-          <Column field="maximoHoras" header="Máximo" sortable style="min-width: 7rem">
-            <template #body="{ data }">{{ horas(data.maximoHoras) }}</template>
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMaximo)" header="Máximo" sortable style="min-width: 7rem">
+            <template #body="{ data }">{{ data.tiempoMaximo.texto }}</template>
+          </Column>
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoTrabajado)" header="Tiempo trabajado" sortable style="min-width: 9rem">
+            <template #body="{ data }">{{ data.tiempoTrabajado.texto }}</template>
           </Column>
         </DataTable>
       </div>

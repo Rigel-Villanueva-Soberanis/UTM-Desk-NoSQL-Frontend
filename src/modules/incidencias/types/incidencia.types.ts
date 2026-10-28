@@ -1,4 +1,5 @@
-export type Estado = 'abierta' | 'en proceso' | 'por autorizar' | 'resuelta' | 'cancelada'
+import type { Tiempo } from '@/core/types/tiempo'
+export type Estado = 'abierta' | 'en proceso' | 'en espera' | 'resuelta' | 'cerrada' | 'cancelada'
 export type Prioridad = 'baja' | 'media' | 'alta' | 'critica'
 
 export const PRIORIDADES: { valor: Prioridad; etiqueta: string }[] = [
@@ -28,7 +29,11 @@ export interface EvidenciaSubida {
   nombreArchivo: string
   formato: string
   bytes: number
-  url: string
+  tipoMime?: string
+  pesoKb?: number
+  /** URL firmada que caduca (ver `venceEn`). */
+  urlTemporal?: string
+  venceEn?: string
 }
 
 /** Lo que pide PATCH /api/incidencias/{id}/evidencias. */
@@ -68,12 +73,20 @@ export interface Seguimiento {
 
 export interface EvidenciaAdjunta {
   nombreArchivo: string
-  urlStorage: string
+  /** Antes la URL fija; ahora el backend manda `urlTemporal` (firmada, con vencimiento en `venceEn`). Se acepta cualquiera. */
+  urlStorage?: string
+  urlTemporal?: string
+  venceEn?: string
+  tipoMime?: string
+  pesoKb?: number
   publicId: string
   formato: string
   subidoPor: ActorRef
   fechaCarga: string
 }
+
+/** URL con la que se muestra una evidencia. */
+export const urlEvidencia = (e: Pick<EvidenciaAdjunta, 'urlTemporal' | 'urlStorage'>) => e.urlTemporal ?? e.urlStorage ?? ''
 
 export interface TecnicoExterno {
   requiereServicioExterno: boolean
@@ -97,7 +110,7 @@ export interface Incidencia {
   datosReportante: ActorRef
   tecnicoAsignado: ActorRef | null
   tecnicoExterno: TecnicoExterno | null
-  horasInvertidas: number
+  tiempoInvertido: Tiempo
   tags: string[]
   historialSeguimiento: Seguimiento[]
   evidenciasAdjuntas: EvidenciaAdjunta[]
@@ -126,8 +139,9 @@ export interface IncidenciaResumen {
 export const ESTADOS: { valor: Estado; etiqueta: string }[] = [
   { valor: 'abierta', etiqueta: 'Abierta' },
   { valor: 'en proceso', etiqueta: 'En proceso' },
-  { valor: 'por autorizar', etiqueta: 'Por autorizar' },
+  { valor: 'en espera', etiqueta: 'En espera' },
   { valor: 'resuelta', etiqueta: 'Resuelta' },
+  { valor: 'cerrada', etiqueta: 'Cerrada' },
   { valor: 'cancelada', etiqueta: 'Cancelada' },
 ]
 
@@ -150,7 +164,7 @@ export interface FiltrosIncidencias {
   fechaHasta: string
 }
 
-export const TAMANOS_PAGINA = [10, 20, 50] as const // el backend permite máximo 50
+export { TAMANOS_PAGINA } from '@/shared/config/paginador' // el backend permite máximo 50
 export const FILTROS_VACIOS: FiltrosIncidencias = {
   pagina: 1,
   tamanoPagina: 10,
@@ -178,11 +192,13 @@ export type Accion =
   | 'eliminar'
   /** Atajo del técnico: abre «Cambiar estado» ya con «resuelta» elegida. */
   | 'resolver'
+  /** Verificación final (Root, Soporte, Administrativos): pasa una incidencia `resuelta` a `cerrada`. */
+  | 'cerrar'
 
 /** Respuesta de PATCH .../horas-invertidas. */
 export interface RespuestaHoras {
-  horasRegistradas: number
-  horasTotales: number
+  tiempoRegistrado: Tiempo
+  tiempoTotal: Tiempo
   seguimiento: Seguimiento
 }
 

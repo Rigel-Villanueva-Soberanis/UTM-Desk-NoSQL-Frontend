@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from 'primevue/button'
+import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
+import { ESTADOS } from '@/modules/incidencias/types/incidencia.types'
 import { useCatalogos } from '@/modules/catalogos/composables/useCatalogos'
 import PantallaVacia from '@/shared/components/PantallaVacia.vue'
 import RangoFechas from '@/shared/components/RangoFechas.vue'
@@ -91,7 +93,27 @@ const sinDatos = computed(() => !!datos.value && datos.value.totalIncidencias ==
             @update:model-value="(v) => aplicar({ edificio: v ?? '' })"
           />
         </div>
+        <div class="campo">
+          <label for="e-estado">Estado</label>
+          <MultiSelect
+            input-id="e-estado"
+            :model-value="filtros.estado"
+            :options="ESTADOS"
+            option-label="etiqueta"
+            option-value="valor"
+            placeholder="Todos"
+            display="chip"
+            :max-selected-labels="3"
+            selected-items-label="{0} estados"
+            :show-toggle-all="false"
+            fluid
+            @update:model-value="(v: string[]) => aplicar({ estado: v })"
+          />
+        </div>
       </div>
+      <p class="mostrando" aria-live="polite">
+        Mostrando: <strong>{{ filtros.estado.length ? filtros.estado.join(', ') : 'Todos' }}</strong>
+      </p>
       <div v-if="hayFiltros" class="pie">
         <Button label="Limpiar filtros" icon="pi pi-filter-slash" severity="secondary" text size="small" @click="limpiar" />
       </div>
@@ -122,12 +144,12 @@ const sinDatos = computed(() => !!datos.value && datos.value.totalIncidencias ==
       <div class="kpis" :class="{ 'cargando-datos': cargando }">
         <TarjetaKpi etiqueta="Incidencias" :valor="num(datos.totalIncidencias, 0)" icono="pi pi-list" detalle="en el periodo" />
         <TarjetaKpi
-          etiqueta="Horas hombre"
-          :valor="`${num(datos.horasHombreTotales)} h`"
+          etiqueta="Tiempo hombre"
+          :valor="datos.tiempoHombreTotal.texto"
           icono="pi pi-clock"
           :detalle="`en ${num(datos.incidenciasConHoras, 0)} incidencias con horas`"
         />
-        <TarjetaKpi etiqueta="Promedio por incidencia" :valor="`${num(datos.promedioHorasPorIncidencia)} h`" icono="pi pi-chart-line" detalle="horas por incidencia" />
+        <TarjetaKpi etiqueta="Promedio por incidencia" :valor="datos.promedioPorIncidencia.texto" icono="pi pi-chart-line" detalle="tiempo por incidencia" />
         <TarjetaKpi
           etiqueta="Con proveedor externo"
           :valor="`${num(datos.proveedoresExternos.porcentaje, 1)} %`"
@@ -168,6 +190,14 @@ const sinDatos = computed(() => !!datos.value && datos.value.totalIncidencias ==
 </template>
 
 <style scoped>
+.mostrando {
+  margin: 12px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.85rem;
+}
+.mostrando strong {
+  color: var(--on-surface);
+}
 .filtros {
   margin-bottom: 16px;
 }

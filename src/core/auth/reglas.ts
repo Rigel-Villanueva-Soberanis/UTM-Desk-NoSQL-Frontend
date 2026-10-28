@@ -5,7 +5,7 @@ import type { UsuarioSesion } from './sesion.store'
  * Reglas POR INCIDENCIA (además del permiso del rol): si es suya, si está asignada a mí, si ya cerró.
  * Ocultar botones es comodidad, no seguridad: el backend siempre valida (403).
  */
-const cerrada = (i: Incidencia) => i.estado === 'resuelta' || i.estado === 'cancelada'
+const cerrada = (i: Incidencia) => i.estado === 'resuelta' || i.estado === 'cerrada' || i.estado === 'cancelada'
 const esMia = (i: Incidencia, u: UsuarioSesion) => i.datosReportante.idUsuario === u.id
 const asignadaAMi = (i: Incidencia, u: UsuarioSesion) => i.tecnicoAsignado?.idUsuario === u.id
 
@@ -15,14 +15,17 @@ export const reglas = {
     !cerrada(i) && (u.rol === 'reportante' ? esMia(i, u) : u.rol === 'tecnico' ? asignadaAMi(i, u) : true),
   asignar: (i: Incidencia) => !cerrada(i),
   cambiarEstado: (i: Incidencia, u: UsuarioSesion) => u.rol !== 'tecnico' || asignadaAMi(i, u),
+  /** «Cerrar» (verificación): solo desde `resuelta`; el permiso del rol lo valida `incidencias.cerrar`. */
+  cerrar: (i: Incidencia) => i.estado === 'resuelta',
   seguimiento: (i: Incidencia, u: UsuarioSesion) => !cerrada(i) && (u.rol !== 'tecnico' || asignadaAMi(i, u)),
   horas: (i: Incidencia, u: UsuarioSesion) => !cerrada(i) && (u.rol !== 'tecnico' || asignadaAMi(i, u)),
   tags: (i: Incidencia, u: UsuarioSesion) => u.rol !== 'tecnico' || asignadaAMi(i, u),
   externo: (i: Incidencia) => !cerrada(i),
 } satisfies Record<string, (i: Incidencia, u: UsuarioSesion) => boolean>
 
-/** Estados a los que puede pasar el técnico. Root/Sop/Adm: cualquiera. */
+/** Estados a los que puede pasar el técnico (solo en sus asignadas; nunca `cerrada` ni `cancelada`). Root/Sop/Adm: cualquiera. */
 export const flujoTecnico: Record<string, string[]> = {
   abierta: ['en proceso'],
-  'en proceso': ['resuelta'],
+  'en proceso': ['en espera', 'resuelta'],
+  'en espera': ['en proceso'],
 }

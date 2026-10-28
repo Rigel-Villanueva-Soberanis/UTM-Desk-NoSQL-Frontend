@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter, type LocationQuery } from 'vue-router'
 import { usePermisos } from '@/core/auth/usePermisos'
+import { fijarContador } from '@/core/layout/useContadores'
 import { mensajeError } from '@/core/http/errores'
 import type { Paginado } from '@/core/types/api'
 import { aQuery, booleano, conPatron, entero, texto, unoDe } from '@/core/utils/query'
@@ -74,6 +75,8 @@ export function useListadoIncidencias(opciones: { ruta?: string; fijos?: Partial
       const r = await listar(filtros.value)
       if (id !== ultimaPeticion) return // llegó una respuesta vieja
       datos.value = r
+      // Sin filtros, el total del listado es el de la insignia del menú: se usa y se evita una consulta aparte.
+      if (!hayFiltros.value && (nombreRuta === 'bandeja' || nombreRuta === 'incidencias')) fijarContador(nombreRuta === 'bandeja' ? 'sinAsignar' : 'total', r.total)
       // Página fuera de rango (p. ej. se borraron incidencias): vuelve a la última que existe.
       if (!r.items.length && r.total > 0 && filtros.value.pagina > r.totalPaginas)
         await irAPagina(r.totalPaginas, filtros.value.tamanoPagina, true)

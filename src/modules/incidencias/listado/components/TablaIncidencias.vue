@@ -9,7 +9,8 @@ import EstadoBadge from '@/shared/components/EstadoBadge.vue'
 import Skeleton from 'primevue/skeleton'
 import PantallaVacia from '@/shared/components/PantallaVacia.vue'
 import PrioridadBadge from '@/shared/components/PrioridadBadge.vue'
-import { ESTADOS, TAMANOS_PAGINA, type Estado, type IncidenciaResumen } from '../../types/incidencia.types'
+import { PAGINADOR } from '@/shared/config/paginador'
+import { ESTADOS, type Estado, type IncidenciaResumen } from '../../types/incidencia.types'
 
 /**
  * Tabla de incidencias que comparten el Listado (Paso 6/9) y la Búsqueda (Paso 10):
@@ -25,7 +26,7 @@ const props = withDefaults(
     hayFiltros: boolean
     agrupar?: boolean
     relevancia?: boolean
-    /** Bandeja: sin columna «Técnico» (todas están sin asignar) y con columna «Acciones». */
+    /** Bandeja: con columna «Acciones». */
     bandeja?: boolean
     tituloVacio?: string
     textoVacio?: string
@@ -38,7 +39,7 @@ const emit = defineEmits<{ paginar: [pagina: number, filas: number]; limpiar: []
 /** Anchos mínimos (rem): la bandeja los aprieta para que quepa la columna «Acciones» sin scroll lateral. */
 const ancho = (normal: number, apretado: number) => ({ minWidth: `${props.bandeja ? apretado : normal}rem` })
 
-const sePuedeAsignar = (i: IncidenciaResumen) => i.estado !== 'resuelta' && i.estado !== 'cancelada'
+const sePuedeAsignar = (i: IncidenciaResumen) => i.estado !== 'resuelta' && i.estado !== 'cerrada' && i.estado !== 'cancelada'
 
 const router = useRouter()
 
@@ -47,7 +48,7 @@ const router = useRouter()
  * El backend entrega las más recientes primero y ese orden se conserva dentro de cada grupo.
  * (El agrupado aplica a la página que se está viendo.)
  */
-const ORDEN_MESA: Estado[] = ['en proceso', 'abierta', 'por autorizar', 'resuelta', 'cancelada']
+const ORDEN_MESA: Estado[] = ['en proceso', 'abierta', 'en espera', 'resuelta', 'cerrada', 'cancelada']
 const filas = computed(() => {
   if (!props.agrupar) return props.items
   const peso = (e: Estado) => {
@@ -72,15 +73,12 @@ const alPaginar = (e: DataTablePageEvent) => emit('paginar', e.page + 1, e.rows)
   <DataTable
     :value="filas"
     data-key="id"
+    v-bind="PAGINADOR"
     lazy
-    paginator
     :rows="tamanoPagina"
     :first="primero"
     :total-records="total"
-    :rows-per-page-options="[...TAMANOS_PAGINA]"
     :loading="cargando"
-    paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
-    current-page-report-template="{first}–{last} de {totalRecords}"
     row-hover
     :row-group-mode="agrupar ? 'subheader' : undefined"
     :group-rows-by="agrupar ? 'estado' : undefined"
@@ -127,7 +125,7 @@ const alPaginar = (e: DataTablePageEvent) => emit('paginar', e.page + 1, e.rows)
       </template>
     </Column>
     <Column header="Título" :style="ancho(11, 9)">
-      <template #body="{ data }"><span class="celda max-2-lineas" :title="data.titulo">{{ data.titulo }}</span></template>
+      <template #body="{ data }"><span class="celda una-linea c-titulo" :title="data.titulo">{{ data.titulo }}</span></template>
     </Column>
     <Column header="Estado" :style="ancho(7.5, 6.5)">
       <template #body="{ data }"><EstadoBadge :estado="data.estado" /></template>
@@ -138,35 +136,30 @@ const alPaginar = (e: DataTablePageEvent) => emit('paginar', e.page + 1, e.rows)
     <Column header="Edificio / Aula" :style="ancho(7.5, 6.5)">
       <template #body="{ data }">
         <div class="doble">
-          <span class="celda una-linea" :title="data.edificio">{{ data.edificio }}</span>
-          <small class="celda una-linea" :title="data.aula">{{ data.aula }}</small>
+          <span class="celda una-linea c-lugar" :title="data.edificio">{{ data.edificio }}</span>
+          <small class="celda una-linea c-lugar" :title="data.aula">{{ data.aula }}</small>
         </div>
       </template>
     </Column>
     <Column header="Reportante" :style="ancho(7, 6)">
-      <template #body="{ data }"><span class="celda max-2-lineas" :title="data.nombreReportante">{{ data.nombreReportante }}</span></template>
+      <template #body="{ data }"><span class="celda una-linea c-reportante" :title="data.nombreReportante">{{ data.nombreReportante }}</span></template>
     </Column>
-    <Column v-if="!bandeja" header="Técnico" style="min-width: 7rem">
+    <Column header="Fecha" :style="ancho(7.5, 7)">
       <template #body="{ data }">
-        <span v-if="data.nombreTecnico" class="celda max-2-lineas" :title="data.nombreTecnico">{{ data.nombreTecnico }}</span>
-        <span v-else class="sin">Sin asignar</span>
-      </template>
-    </Column>
-    <Column header="Fecha" :style="ancho(6.5, 5.8)">
-      <template #body="{ data }">
-        <div class="doble">
+        <div class="doble fecha">
           <span>{{ formatearDia(data.fechaCreacion) }}</span>
           <small>{{ formatearHora(data.fechaCreacion) }}</small>
         </div>
       </template>
     </Column>
-    <Column v-if="bandeja" header="Acciones" style="min-width: 10rem">
+    <Column v-if="bandeja" header="Acciones" style="min-width: 12rem; width: 12rem">
       <template #body="{ data }">
         <Button
           v-if="sePuedeAsignar(data)"
           label="Asignar técnico"
           icon="pi pi-user-plus"
           size="small"
+          class="btn-asignar"
           data-accion="asignar"
           @click.stop="emit('asignar', data)"
         />
@@ -182,7 +175,7 @@ const alPaginar = (e: DataTablePageEvent) => emit('paginar', e.page + 1, e.rows)
 }
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-column-header-content) {
-  padding-inline: 0.6rem;
+  padding-inline: 0.5rem;
 }
 .folio {
   font-weight: 600;
@@ -198,6 +191,28 @@ const alPaginar = (e: DataTablePageEvent) => emit('paginar', e.page + 1, e.rows)
 }
 .celda.una-linea {
   display: block;
+}
+/* Una sola línea por celda: todas las filas miden lo mismo con textos cortos o largos */
+.c-titulo {
+  max-width: 14rem;
+}
+.c-reportante {
+  max-width: 10rem;
+}
+.c-lugar {
+  max-width: 10rem;
+}
+.fecha,
+.fecha span,
+.fecha small {
+  white-space: nowrap;
+}
+.btn-asignar {
+  white-space: nowrap;
+  width: 100%;
+}
+.btn-asignar :deep(.p-button-label) {
+  white-space: nowrap;
 }
 .grupo {
   display: flex;
