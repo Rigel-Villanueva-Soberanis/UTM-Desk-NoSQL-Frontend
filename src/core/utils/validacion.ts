@@ -98,6 +98,9 @@ export function limpiarDetalle(d: Record<string, string | number>): Record<strin
 /** Usuario de acceso: letras, números, ".", "_" y "-" (3–50). */
 export const REGEX_USUARIO = /^[A-Za-z0-9._-]{3,50}$/
 
+/** Quita los acentos al escribir el usuario de acceso ("José" → "Jose", "Ñandú" → "Nandu"). */
+export const sinAcentos = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
 /** Correo con forma válida (el backend valida a fondo y que sea único). */
 export const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

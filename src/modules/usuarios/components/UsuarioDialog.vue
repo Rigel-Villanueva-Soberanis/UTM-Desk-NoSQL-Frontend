@@ -6,7 +6,7 @@ import Message from 'primevue/message'
 import Password from 'primevue/password'
 import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
-import { LIMITES } from '@/core/utils/validacion'
+import { LIMITES, sinAcentos } from '@/core/utils/validacion'
 import CampoFormulario from '@/shared/components/CampoFormulario.vue'
 import DialogoAccion from '@/shared/components/DialogoAccion.vue'
 import { useFormUsuario } from '../composables/useFormUsuario'
@@ -16,6 +16,18 @@ import { generarPassword } from '../utils/password'
 /** Crear (sin `id`) o editar (con `id`) un usuario en un modal. */
 const props = defineProps<{ id?: string }>()
 const emit = defineEmits<{ guardado: []; cerrado: [] }>()
+
+/** El usuario de acceso no lleva acentos: se limpian al escribir o pegar ("josé" → "jose"). */
+function limpiarUsuario(e: Event) {
+  const campo = e.target as HTMLInputElement
+  const limpio = sinAcentos(campo.value)
+  if (limpio !== campo.value) {
+    const pos = campo.selectionStart
+    campo.value = limpio
+    if (pos !== null) campo.setSelectionRange(pos, pos)
+  }
+  form.usuario = limpio
+}
 
 const abierto = ref(true)
 const idRef = computed(() => props.id)
@@ -100,7 +112,7 @@ async function enviar() {
             :ayuda="editando ? 'El nombre de usuario no se puede cambiar.' : 'Letras, números, punto, guion y guion bajo (3 a 50).'"
             :contador="editando ? undefined : { actual: form.usuario.length, max: LIMITES.usuario.max }"
           >
-            <InputText id="u-usuario" v-model="form.usuario" :maxlength="LIMITES.usuario.max" :readonly="editando" autocomplete="off" autocapitalize="off" :invalid="!!errores.usuario" fluid />
+            <InputText id="u-usuario" :model-value="form.usuario" @input="limpiarUsuario" :maxlength="LIMITES.usuario.max" :readonly="editando" autocomplete="off" autocapitalize="off" :invalid="!!errores.usuario" fluid />
           </CampoFormulario>
           <CampoFormulario id="u-correo" etiqueta="Correo" requerido :error="errores.correo" :contador="{ actual: form.correo.length, max: LIMITES.correo.max }">
             <InputText id="u-correo" v-model="form.correo" type="email" :maxlength="LIMITES.correo.max" autocomplete="off" :invalid="!!errores.correo" fluid />

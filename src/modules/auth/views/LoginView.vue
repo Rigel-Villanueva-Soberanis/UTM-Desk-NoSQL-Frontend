@@ -6,6 +6,7 @@ import { useSesionStore } from '@/core/auth/sesion.store'
 import { aviso } from '@/core/http/avisos'
 import { aMapa, mensajeError } from '@/core/http/errores'
 import { rutaInicio } from '@/core/router/inicio'
+import { sinAcentos } from '@/core/utils/validacion'
 import CampoError from '@/shared/components/CampoError.vue'
 import { login } from '../api/auth.api'
 
@@ -34,7 +35,7 @@ async function entrar() {
   mensaje.value = ''
   errores.value = {}
   try {
-    sesion.login(await login(form.usuario.trim(), form.password))
+    sesion.login(await login(sinAcentos(form.usuario.trim()), form.password))
     await router.replace(destino())
   } catch (e) {
     errores.value = aMapa(e)
