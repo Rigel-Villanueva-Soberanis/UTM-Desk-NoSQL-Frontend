@@ -66,7 +66,7 @@ function agregar() {
   lista.value = [...lista.value, valor]
   entrada.value = ''
   emit('cambio')
-  ;(campo.value?.$el as HTMLInputElement | undefined)?.focus()
+  ;(campo.value as unknown as { $el?: HTMLInputElement } | null)?.$el?.focus()
 }
 function quitar(s: string) {
   lista.value = lista.value.filter((x) => x !== s)

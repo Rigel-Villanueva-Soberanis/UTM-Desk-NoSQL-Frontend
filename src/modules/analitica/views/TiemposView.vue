@@ -157,16 +157,16 @@ const anchoMinimo = computed(() => `${Math.max(0, datos.value.length * 72)}px`)
             <template #body="{ data }"><span class="max-2-lineas" :title="data.edificio">{{ data.edificio }}</span></template>
           </Column>
           <Column field="totalReportes" header="Reportes" sortable style="min-width: 7rem" />
-          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoPromedio)" header="Promedio" sortable style="min-width: 7rem">
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoPromedio) as unknown as string" header="Promedio" sortable style="min-width: 7rem">
             <template #body="{ data }">{{ data.tiempoPromedio.texto }}</template>
           </Column>
-          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMinimo)" header="Mínimo" sortable style="min-width: 7rem">
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMinimo) as unknown as string" header="Mínimo" sortable style="min-width: 7rem">
             <template #body="{ data }">{{ data.tiempoMinimo.texto }}</template>
           </Column>
-          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMaximo)" header="Máximo" sortable style="min-width: 7rem">
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoMaximo) as unknown as string" header="Máximo" sortable style="min-width: 7rem">
             <template #body="{ data }">{{ data.tiempoMaximo.texto }}</template>
           </Column>
-          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoTrabajado)" header="Tiempo trabajado" sortable style="min-width: 9rem">
+          <Column :field="(d: TiempoEdificio) => aHoras(d.tiempoTrabajado) as unknown as string" header="Tiempo trabajado" sortable style="min-width: 9rem">
             <template #body="{ data }">{{ data.tiempoTrabajado.texto }}</template>
           </Column>
         </DataTable>

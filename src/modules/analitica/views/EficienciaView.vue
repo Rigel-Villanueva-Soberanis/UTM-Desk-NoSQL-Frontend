@@ -4,7 +4,7 @@ import Button from 'primevue/button'
 import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import Skeleton from 'primevue/skeleton'
-import { ESTADOS } from '@/modules/incidencias/types/incidencia.types'
+import { ESTADOS, type Estado } from '@/modules/incidencias/types/incidencia.types'
 import { useCatalogos } from '@/modules/catalogos/composables/useCatalogos'
 import PantallaVacia from '@/shared/components/PantallaVacia.vue'
 import RangoFechas from '@/shared/components/RangoFechas.vue'
@@ -107,7 +107,7 @@ const sinDatos = computed(() => !!datos.value && datos.value.totalIncidencias ==
             selected-items-label="{0} estados"
             :show-toggle-all="false"
             fluid
-            @update:model-value="(v: string[]) => aplicar({ estado: v })"
+            @update:model-value="(v: Estado[]) => aplicar({ estado: v })"
           />
         </div>
       </div>
