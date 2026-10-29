@@ -25,6 +25,12 @@ const form = reactive({ estado: '' as Estado | '', motivo: '', horas: null as nu
 /** Horas del trabajo: solo el técnico asignado o Root (Soporte / Administrativos reciben 403). */
 const puedeHoras = computed(() => sesion.rol === 'tecnico' || sesion.rol === 'root')
 
+/** Técnico que resuelve una incidencia sin tiempo acumulado: debe registrar al menos 1 minuto en este mismo cambio. */
+const horasObligatorias = computed(() => {
+  const t = props.incidencia.tiempoInvertido
+  return sesion.rol === 'tecnico' && form.estado === 'resuelta' && !((t?.horas ?? 0) > 0 || (t?.minutos ?? 0) > 0)
+})
+
 /** Técnico: solo `flujoTecnico` (abierta → en proceso, en proceso → resuelta). Root / Soporte / Administrativos: cualquiera (incluye reabrir). */
 const opciones = computed(() => {
   const permitidos =
@@ -63,7 +69,9 @@ function guardar() {
       else if (!opciones.value.some((o) => o.valor === form.estado)) e.estado = 'Ese cambio de estado no está permitido.'
       if (motivo.length < LIMITES.motivo.min || motivo.length > LIMITES.motivo.max)
         e.motivo = mensajeLongitud('El motivo', LIMITES.motivo.min, LIMITES.motivo.max)
-      if (puedeHoras.value && (horas > 0 || minutos > 0)) {
+      if (horasObligatorias.value && horas === 0 && minutos === 0)
+        e.horas = 'Para marcar la incidencia como resuelta debes registrar el tiempo trabajado (horas y minutos).'
+      else if (puedeHoras.value && (horas > 0 || minutos > 0)) {
         const { maxHoras, maxMinutos } = LIMITES.tiempo
         if (!Number.isInteger(horas) || horas < 0 || horas > maxHoras) e.horas = `Las horas deben ser un número entero de 0 a ${maxHoras}.`
         else if (!Number.isInteger(minutos) || minutos < 0 || minutos > maxMinutos) e.minutos = `Los minutos deben ser un número entero de 0 a ${maxMinutos}.`
@@ -145,9 +153,10 @@ function guardar() {
         v-if="puedeHoras"
         id="horas"
         etiqueta="Tiempo trabajado"
-        opcional
+        :requerido="horasObligatorias"
+        :opcional="!horasObligatorias"
         :error="primerError(errores, 'horas') || primerError(errores, 'minutos')"
-        ayuda="Si lo llenas, se suma al tiempo registrado en este mismo cambio (máximo 24 h por registro)."
+        :ayuda="horasObligatorias ? 'Obligatorio para resolver: indica al menos 1 minuto (máximo 24 h por registro).' : 'Si lo llenas, se suma al tiempo registrado en este mismo cambio (máximo 24 h por registro).'"
       >
         <div class="par">
           <InputNumber v-model="form.horas" input-id="horas" :min="0" :max="LIMITES.tiempo.maxHoras" :use-grouping="false" :max-fraction-digits="0" show-buttons suffix=" h" aria-label="Horas" :invalid="!!errores.horas" :disabled="enviando" fluid />
